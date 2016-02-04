@@ -1,10 +1,8 @@
 int frames = 30;
-import controlP5.*; ControlP5 cp5;
-//import ddf.minim.*; Minim minim; AudioPlayer player;
-float[] slider = {0 ,40 ,20 ,0 ,20 ,20 ,20 ,20}; float[] knob = {60 ,0 ,0 ,0 ,0 ,0 ,0 ,0}; boolean[] button = {true ,true ,true ,true ,true ,true ,true ,true,true,true,true,true,true,true,true,true};
-BiSlider[] bi ; DiSlider di ; Snap snaps ; CheckBox checkbox; MapImg mapImg;
+float[] slider = {0 ,40 ,20 ,0 ,20 ,20 ,20 ,20}; float[] knob = {60 ,0 ,0 ,0 ,0 ,0 ,0 ,0};
+Button[] button ; BiSlider[] bi ; DiSlider di ; Snap snaps ; CheckBox checkbox; MapImg mapImg;
 PFont font;
-boolean control = false, live = true, map = false, viewing = false, seuilVisible=true;
+boolean control = false, live = true, map = false, viewing = false, seuilVisible=true, greyScale = false;
 String[] saved ; 
 String lastPath ;
 PImage src, view, currentI, srcMin, grad,gradInvert;
@@ -17,26 +15,24 @@ void setup() {
   frameRate(60);
   for (int i = 0; i<=25; i++){   colorMode(HSB); C[i] = color(122,270-i*13,100+i*5); } // create palette
   background(C[25]); noStroke();
-  //minim = new Minim(this); player = minim.loadFile("lake-waves-01.wav");
   src=loadImage("wiki.png");
   grad=loadImage("gradient.png"); gradInvert=loadImage("gradInvert.png");
-  selectInput("Select a file to process:", "fileSelected"); noLoop(); 
-  
   font = loadFont("FedraTwelve-Normal-12.vlw");  textFont(font, 12); fontColor();
-  cp5 = new ControlP5(this); 
 
-  cp5.addButton("new file",0, d,     d, 100+5, 20 ).setCaptionLabel("import image");    style1("new file");
-  cp5.addButton("export",0,   d+110, d, 100+5, 20 ).setCaptionLabel("export image");    style1("export");
-  cp5.addButton("load",0,     d+220, d, 100+5, 20 ).setCaptionLabel("load");    style1("load");
-  cp5.addButton("save",0,     d+330 ,d, 95,   20 ).setCaptionLabel("save");  style1("save"); 
-
-  cp5.addButton("specimen",0,  d+430, d, a/2-b, 20).setCaptionLabel("specimen");         style1("specimen");
-  cp5.addButton("renderControl",0,   d+a+a+a/2+30, d, a/2-b, 20).setCaptionLabel("render     >>");         style1("renderControl");
+  button = new Button[6];
+  // TODO looper + actionner
+  button[0] = new Button(d    , d, 100+5, 20 ,"new file");
+  button[1] = new Button(d+110, d, 100+5, 20 ,"export");
+  button[2] = new Button(d+220, d, 100+5, 20 ,"load");
+  button[3] = new Button(d+330, d, 95,    20 ,"save");
+  button[4] = new Button(d+430, d, a/2-b, 20,"specimen");
+  button[5] = new Button(d+a+a+a/2+30, d, a/2-b, 20,"render");
   
   text("growing time", gauche+20, haut+a+c+10); if(seuilVisible) text("threshold", gauche+20, haut+a+c+55); 
-  cp5.addSlider("iterations", 1,1000,gauche,  haut+a+c+15, a+20, 20).setDecimalPrecision(0).setCaptionLabel("");         style1("iterations"); 
-  if(seuilVisible){ cp5.addSlider("threshold", 0,255, gauche+20, haut+a+c+60, a, 15).setDecimalPrecision(0).setCaptionLabel("");    style1("threshold");  }
-  if(seuilVisible){ checkbox = cp5.addCheckBox("thresholdButton",gauche,  haut+a+c+60).setSize(15, 15).addItem("50", 50).hideLabels();  style2(); }
+
+  // TODO iterations control slider
+  //cp5.addSlider("iterations", 1,1000,gauche,  haut+a+c+15, a+20, 20).setDecimalPrecision(0).setCaptionLabel("");         style1("iterations"); 
+  // TODO inclure un switch pour un export en greyScale
 
   mapImg = new MapImg(gauche, haut);
   snaps = new Snap( d,  height-d-a/2 );
@@ -44,11 +40,15 @@ void setup() {
   bi[0] = new BiSlider(6, "reaction", gauche-10, haut+a+c+150, a+20);
   bi[1] = new BiSlider(7, "diffusion", gauche-10, haut+a+c+a+a/2-60, a+20);
   di = new DiSlider(gauche+a+80+b, haut+a+c+10, a+20);
-  
+
   saved = loadStrings("default.trm");
   setParam(saved);
   di.setup();
+
+  //selectInput("Select a file to process:", "fileSelected"); noLoop();  // File selector at TexTuring-launch
+  File file = new File( dataPath("wiki.png") ); fileSelected(file);      // File selected at TexTuring-launch
 }
+
 void draw() {
   //if (frameCount%1==0) viewSize = (int)map(slider[0],0,1000,a,50);//int(frameRate*20) ;
   if (viewing && srcMin!=null) preview() ;
@@ -63,10 +63,10 @@ void controlEvent (ControlEvent theEvent) {
   println("got a control event from controller with name " + theEvent.getName() );
   if ( theEvent.getName() == "iterations" )    { slider[0] = theEvent.getController().getValue(); viewing = true ;}
   if ( theEvent.getName() == "threshold" )     { slider[1] = theEvent.getController().getValue(); viewing = true ;}
-  if ( theEvent.isFrom(checkbox) )             { button[0] = !button[0] ;                         viewing = true ;}
+  //if ( theEvent.isFrom(checkbox) )             { button[0] = !button[0] ;                         viewing = true ;}
 
   if ( theEvent.getName() == "new file" ) { noLoop(); selectInput("Select your image", "fileSelected"); viewing = true ;}  
-  if ( theEvent.getName() == "renderControl" )     render(); 
+  if ( theEvent.getName() == "renderControl" ) render(); 
   if ( theEvent.getName() == "export" )   { render(); currentI.save("testFinalz_"+frameCount+"_test.png"); }
   if ( theEvent.getName() == "specimen" ) { }//noLoop(); selectOutput("Nomez votre spécimen", "saveSpecimen"); }
 
@@ -77,6 +77,9 @@ void controlEvent (ControlEvent theEvent) {
     if ( theEvent.getId() == i+16 ) { snaps.pressed(i); viewing = true ; }
   }
 }
+void buttonAction(String name){
+}
+
 void render(){
   currentI = src.get();
   turing2(currentI); 
@@ -128,8 +131,8 @@ void folderSelected(File selection) {
 }
 void keyReleased()  { control = false; }
 void mousePressed() { for (BiSlider o : bi){ o.pressed(); } di.pressed(); }
-void mouseReleased(){ for (BiSlider o : bi){ o.released();} di.released(); }
-void mouseMoved(){ di.mouved();  bi[0].mouved(); bi[1].mouved(); mapImg.mouved(); }
+void mouseReleased(){ for (BiSlider o : bi){ o.released();} di.released(); button[0].pressed(); }
+void mouseMoved(){ di.mouved();  bi[0].mouved(); bi[1].mouved(); mapImg.mouved(); button[0].mouved(); }
 void mouseDragged(){ for (BiSlider o : bi) { o.dragged(); } di.dragged(); mapImg.dragged(); }
 
 void fileSelected(File selection) { lastPath=selection.getAbsolutePath(); 
@@ -165,259 +168,14 @@ void setParam ( String data[] ) {
     knob[i] = int(n[1]); 
   }
   for (BiSlider o : bi) { o.setup(); } di.setup();
-  cp5.getController("iterations").setValue(slider[0]);
-  if(seuilVisible) cp5.getController("threshold").setValue(slider[1]);
+  // TODO slider[iterations].setValue(slider[0]);
+  // TODO slider[ threshold].setValue(slider[1]);
   map=true; turing2(di.mapImg); map=false;
   viewing = true ;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-boolean isOver ( float left, float right, float top, float bottom ) {
-  if (mouseX > left && mouseX < right && mouseY > top && mouseY < bottom ) { return true; } else { return false; }
-}
-class MapImg {
-  char over = 'n'; int x,y,mX,mY;
-  MapImg (int tx, int ty){ y=ty; x=tx; mX=x+40; mY=y+40;}
-  void mouved(){ 
-    if ( isOver(x,x+srcMin.width,y,y+srcMin.height) ){ 
-      over='a'; setup(); 
-    }else if (over=='a') { 
-      over='n'; setup(); 
-      }  
-    }
-  void dragged(){
-    if ( mouseX>x && mouseX<a+x && mouseY>y && mouseY<a+y && di.zone == 0 ) {  // pre-view position
-      viewX = constrain( (mouseX-x)*w/srcMin.width -viewSize/2 ,0,w-viewSize-1) ; 
-      viewY = constrain( (mouseY-y  )*h/srcMin.height-viewSize/2 ,0,h-viewSize-1) ;
-      mX = mouseX ; 
-      mY = mouseY ;
-      setup();
-      viewing = true ;
-    } 
-  }
-  void setup(){
-    image(srcMin, x, y);
-    styleSelecStroke(); if(over=='a') stroke(colorActive); strokeWeight(2.5);
-    rect(constrain( mX-viewSize*srcMin.width/w/2, x+1, x+srcMin.width-viewSize*srcMin.width/w -2), 
-         constrain( mY-viewSize*srcMin.width/w/2,   y+1,   y+srcMin.height-viewSize*srcMin.width/w -2), 
-        viewSize*srcMin.width/w, viewSize*srcMin.width/w
-    );strokeWeight(1); noStroke();
-  }
-}
 
-class Snap {
-  String name; int ref, x, y, s, m, sh=20; float pos1, pos2, pos3, zone;
-  String[][] snapVar = new String[20][8];
-  PImage[] snap = new  PImage[6];
-  Button[] snapButton = new Button[snap.length];
-  Snap (int tx,int ty){ 
-    x=tx; y=ty;
-    for (int i = 0; i<snap.length; i++) {  
-      snapButton[i] = cp5.addButton("snap"+i, 0, x+i%6*(a/2+b), y+floor(i/6)*(a/2+b), a/2, a/2).setId(i+16).setCaptionLabel(""); style1("snap" +i);
-    }
-  }
-  void pressed (int off){
- // d+a/2+b,   a+a+a/2 +c+c+d 
-    if(snap[off]==null && currentI!=null) {  // save snap
-      snap[off] = currentI.get(); 
-      for (int i = 0; i<8; i++){ snapVar[off][i] = slider[i]+" "+knob[i] ; } 
-      PImage tmp1 = snap[off].get();
-      tmp1.resize( srcMin.width/2, srcMin.height/2 );
-      PImage tmp2 = snap[off].get( snap[off].width/2, snap[off].height/2, srcMin.width/2, srcMin.height/2 );
-      snapButton[off].setImages(tmp1,tmp2,tmp1).hide().setSize(srcMin.width/2, srcMin.height/2).show() ;  
-      fill(C[25]); rect( x+off%6*(a/2+b) , y+floor(off/6)*(a/2+b), a/2, a/2); 
-    }
-    if (snap[off]!=null) {  // load snap
-      currentI = snap[off];
-      image(currentI, 3*a+35+d, d ); // ,(currentI.width*(height-d))/currentI.height, height-d); 
-      setParam(snapVar[off]);
-    }      
-  }
-}
-class BiSlider {
-  String name; int ref, x, y, s, m, sh=20; float pos1, pos2, pos3, zone; char over;
-  BiSlider(int tref, String tname,int tx,int ty, int ts){ 
-    ref=tref; name=tname; x=tx+10; y=ty; s=ts-10;
-    setup();
-  }
-    void mouved(){
-    if      ( isOver(x+slider[ref]-18, x+slider[ref]+18, y, y+sh ) ) { over = 'b' ; setup(); }
-    else if ( isOver(x+  knob[ref]-18, x+  knob[ref]+18, y+2*sh, y+3*sh ) ) { over = 'w' ; setup(); }
-    else if ( isOver(x, x+s, y+sh, y+2*sh ) ) { over = 'a' ; setup(); }
-    else { over= 'n'; setup(); }
-  }
-  void pressed (){
-    if ( mouseX>x+slider[ref]-18 && mouseY>y                && mouseX<x+slider[ref]+18 && mouseY<y+sh              ) { zone=1; pos1=mouseX; }
-    if ( mouseX>x+ knob [ref]-18 && mouseY>y+2*sh           && mouseX<x+ knob [ref]+18 && mouseY<y+3*sh            ) { zone=2; pos2=mouseX; }
-    if ( mouseX>x                && mouseY>y+sh             && mouseX<x+s              && mouseY<y+2*sh            ) { zone=3; pos3=mouseX; }
-  }  
-  void released (){ 
-    if (zone!=0) di.setupImg();
-    zone=0;  
-  }
-  void dragged () {
-    if ( zone!=0 ) {
-      m   = mouseX ;
-      off = (control) ? 20 : 1 ;
-      if ( zone==1 ) { // top
-        slider[ref] += (m-pos1)/off;    pos1=m; 
-        slider[ref] = constrain(slider[ref], 0, s-10);
-      }
-      if ( zone==2 ) { // bottom
-        knob[ref] += (m-pos2)/off;  pos2=m; 
-        knob[ref] = constrain(knob[ref], 0, s-10);
-      }
-      if ( zone==3 ) { // center
-        slider[ref] += (m-pos3)/off ;
-        knob  [ref] += (m-pos3)/off ;
-        slider[ref] = constrain(slider[ref], 0, s-10);
-        knob  [ref] = constrain(knob  [ref], 0, s-10);
-        pos3=m;
-      }
-      setup(); 
-      viewing = true ;
-    }
-  } 
-  void setup(){
-    float sli = slider[ref]; float kno = knob[ref];
-    pushMatrix(); translate(x, y); 
-        fontColor(); text(name, 0 , -10); textAlign(CENTER);
-        fill(colorElemBg); rect(-18,0,s+26,3*sh);  //bg
-        fill(C[18]); rect(0,sh+3,s-10,sh-6); // bg slide
-        fill(0); triangle(sli-18, sh-3, sli+18, sh-3, sli, sh+3); // top
-        fill(255); triangle(kno-18, 2*sh+3, kno+18, 2*sh+3, kno, 2*sh-3); // bottom
-        fill(C[15]); if(over=='b' || over=='a') fill(colorActive); rect(sli-18, 0,  36,sh-3); // top cursor box
-        fill(C[15]); if(over=='w' || over=='a') fill(colorActive); rect(kno-18, 2*sh+3, 36,sh-3); // bottom
-          fontColor(); 
-        text(nfs(sli,0,1), sli, sh-3-4);
-        text(nfs(kno,0,1), kno, 3*sh-4);
-          fill(C[15]);
-        if(sli<kno) image(gradInvert, sli, sh+3, kno-sli, sh-6);  
-        if(sli>=kno)image(grad,       kno, sh+3, sli-kno, sh-6); 
-    popMatrix(); textAlign(LEFT);
-  }  
-}
-
-class DiSlider {
-  int x, y, s; float pos1, pos2, pos3, pos11, pos22, pos33, zone ; PImage mapImg = createImage(100, 100, ARGB); char over = 'n' ;
-  DiSlider(int tx,int ty, int ts){ 
-    x=tx; y=ty; s=ts;
-    setupImg();
-  }
-  void mouved(){
-    if      ( isOver(x+slider[4]-10, x+slider[4]+10, y+map(slider[5],0,s,s,0)-10, y+map(slider[5],0,s,s,0)+10 ) ) { over = 'b' ; setup(); }
-    else if ( isOver(x+  knob[4]-10, x+  knob[4]+10, y+map(  knob[5],0,s,s,0)-10, y+map(  knob[5],0,s,s,0)+10 ) ) { over = 'w' ; setup(); }
-    else if ( isOver(x, x+s, y, y+s ) ) { over = 'a' ; setup(); }
-    else { over= 'n'; setup(); }
-  }
-  void pressed (){
-    if (      mouseX>x+slider[4]-10 && mouseY>y+map(slider[5],0,s,s,0)-10 && mouseX<x+slider[4]+10 && mouseY<y+map(slider[5],0,s,s,0)+10 ) { zone=1; pos1=mouseX; pos11=mouseY; }
-    else if ( mouseX>x+ knob [4]-10 && mouseY>y+map( knob [5],0,s,s,0)-10 && mouseX<x+ knob [4]+10 && mouseY<y+map( knob [5],0,s,s,0)+10 ) { zone=2; pos2=mouseX; pos22=mouseY; }
-    else if ( mouseX>x              && mouseY>y              && mouseX<x+s            && mouseY<y+s            ) { zone=3; pos1=mouseX; pos11=mouseY; pos2=mouseX; pos22=mouseY; }
-  }  
-  void released () { zone=0; 
-  }
-  void dragged () {
-    float sli5 = s-slider[5]; float kno5 = s-knob[5];
-    off = (control) ? 20 : 1 ;
-    if ( zone==1 || zone==3 ) { // top black
-      slider[4] += (mouseX-pos1)/off;    pos1=mouseX; 
-      slider[5] -= (mouseY-pos11)/off;   pos11=mouseY; 
-      slider[4] = constrain(slider[4], 0, s-20);
-      slider[5] = constrain(slider[5], 0, s-20);
-    }
-    if ( zone==2 || zone==3 ) { // bottom white
-      knob[4] += (mouseX-pos2)/off;  pos2=mouseX; 
-      knob[5] -= (mouseY-pos22)/off; pos22=mouseY; 
-      knob[4] = constrain(knob[4], 0, s-20);
-      knob[5] = constrain(knob[5], 0, s-20);
-    }
-    if ( zone!=0 ) setup();
-    viewing = true ;
-  }
-  void setupImg () { map=true; turing2(mapImg); map=false; setup();}
-  void setup () {
-    float sli5 = s-slider[5]; float kno5 = s-knob[5];  // invert 0->200 to 200->0
-    pushMatrix(); translate(x, y);
-      fill(C[25]); rect(-36,s,50,50 ); //bg clean
-      fill(colorElemBg); rect(-20,0,s+40,s+40 ); //bg
-      image(mapImg, 0,20,s-20,s-20);
-      strokeWeight(5);
-        stroke(C[12]); if(over=='b' || over=='a') stroke(colorActive); ellipse(slider[4], sli5, 15, 15);  // top
-        stroke(C[12]); if(over=='w' || over=='a') stroke(colorActive); ellipse(knob  [4], kno5, 15, 15);  // bottom
-      strokeWeight(1); noStroke();
-      for (int i = 0; i<=20; i++){
-        fill(255/20*i);
-        ellipse(slider[4]+i*(knob[4]-slider[4])/20, sli5+i*(kno5-sli5)/20, 10,10);
-      }
-    popMatrix();
-    setupSlider(4, "thickness", x, y+s+10, s-10);
-    setupSlider(5, "brightness", x+s-10, y+s, s-10);
-  } 
-  void setupSlider(int ref, String name, int xx, int yy, int s){ int sh=15;
-    float sli = slider[ref]; float kno = knob[ref];
-    pushMatrix(); translate(xx, yy); if(ref==5)rotate(-PI/2);
-    fontColor(); text(name, 0 , 50); 
-    fill(C[18]); rect(0,0,s-10,sh-6); // bg slide
-    if ( abs(sli-kno)<36 ) {
-      float mid = (sli<kno) ? sli+(kno-sli)/2 : kno+(sli-kno)/2 ;
-      if (sli<kno) { fill(0); triangle(mid, sh, mid-36, sh, sli, sh-6); fill(255); triangle(mid, sh, mid+36, sh, kno, sh-6); }
-      if (sli>=kno) {fill(0); triangle(mid, sh, mid+36, sh, sli, sh-6); fill(255); triangle(mid, sh, mid-36, sh, kno, sh-6); }
-        fill(C[18]);
-      rect(mid, sh, -36,sh); rect(mid, sh, 36,sh); // cursor box
-
-        fontColor(); textAlign(CENTER); 
-      if(sli<kno){ text(nfs(sli,0,1), mid-18, 2*sh-4); text(nfs(kno,0,1), mid+18, 2*sh-4);
-      } else {     text(nfs(sli,0,1), mid+18, 2*sh-4); text(nfs(kno,0,1), mid-18, 2*sh-4); }
-      if(sli<kno) image (gradInvert, sli, 0, kno-sli, sh-6);  
-      if(sli>=kno)image (grad,       kno, 0, sli-kno, sh-6); 
-    } else {
-      fill (0);   triangle ( sli-18, sh, sli+18, sh, sli, sh-6); // top
-      fill (255); triangle ( kno-18, sh, kno+18, sh, kno, sh-6); // bottom
-        fill(C[18]);
-      rect ( sli-18, sh, 36,sh ); // cursor box
-      rect ( kno-18, sh, 36,sh );
-        fontColor(); textAlign(CENTER);
-      text ( nfs(sli,0,1), sli, 2*sh-4);
-      text ( nfs(kno,0,1), kno, 2*sh-4);
-      if(sli<kno) image(gradInvert, sli, 0, kno-sli, sh-6);  
-      if(sli>=kno)image(grad,       kno, 0, sli-kno, sh-6);        
-    }
-    popMatrix(); textAlign(LEFT);
-  } 
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-color bg = #EDEDED;
-color colorElemBg = color(210);
-//color colorOver = color();
-color colorActive = #ff7f09; //#fc3011; //fc622a;
-color colorFont = #002645;
-int a = 200, b = 5, c = 20, d = 10, haut = 60, gauche = 65;
-void styleSelecStroke(){ stroke(C[15]); noFill(); }
-void styleSelec(){ fill(C[15]); noStroke(); }
-void fontColor(){ fill(#002666); }
-
-void style1 (String theControllerName) { 
-    println(theControllerName);
-  ControlFont cFont = new ControlFont(font,12);
-  cp5.getController(theControllerName).getCaptionLabel().setFont(cFont).toUpperCase(false);
-  cp5.setControlFont(cFont);
-  cp5.setColorValue(colorFont); 
-  cp5.getController(theControllerName).setColorBackground(C[17]);
-  if(theControllerName=="load"||theControllerName=="save"||theControllerName=="render") cp5.getController(theControllerName).setColorBackground(C[20]);
-  cp5.getController(theControllerName).setColorCaptionLabel(colorFont);
-  cp5.getController(theControllerName).setColorForeground(C[12]);
-  cp5.getController(theControllerName).setColorActive(colorActive);
-}
-
-void style2 () {
-  ControlFont cFont = new ControlFont(font,12);
-  checkbox.getCaptionLabel().setFont(cFont).toUpperCase(false);
-  checkbox.setColorBackground(C[18]);
-  checkbox.setColorForeground(C[12]);
-  checkbox.setColorActive(C[15]);
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -528,9 +286,9 @@ float lapU, lapV;
       for (int j = 0; j < H; j++) {
         pShift = int( U[i][j]*255 ) ;
 
-        if(button[0] && pShift<slider[1]) { img.pixels[j*W+i] = color(0); } else { img.pixels[j*W+i] = color(255); }
-        if(!button[0]) img.pixels[j*W+i] =  0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
-        if(map && pShift<slider[1]) { img.pixels[j*W+i] = C[18]; } else if(map){ img.pixels[j*W+i] = color(255); }
+        if( !greyScale && pShift<slider[1] ) { img.pixels[j*W+i] = color(0); } else { img.pixels[j*W+i] = color(255); }
+        if( greyScale ) img.pixels[j*W+i] =  0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
+        if( map && pShift<slider[1] ) { img.pixels[j*W+i] = C[18]; } else if(map){ img.pixels[j*W+i] = color(255); }
 
       }
     }
