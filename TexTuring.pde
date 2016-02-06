@@ -1,6 +1,6 @@
 int frames = 30;
 float[] slider = {0 ,40 ,20 ,0 ,20 ,20 ,20 ,20}; float[] knob = {60 ,0 ,0 ,0 ,0 ,0 ,0 ,0};
-Button[] button ; BiSlider[] bi ; DiSlider di ; Snap snaps ; CheckBox checkbox; MapImg mapImg;
+Button[] button ; BiSlider[] bi ; DiSlider di ; MonoSlider mono; Snap snaps ; CheckBox checkbox; MapImg mapImg;
 PFont font;
 boolean control = false, live = true, map = false, viewing = false, seuilVisible=true, greyScale = false;
 String[] saved ; 
@@ -13,29 +13,29 @@ void setup() {
   size(1350, 720); //frame.setIconImage( getToolkit().getImage("icone.ico") ); //size(displayWidth, displayHeight);
   //if (frame != null) { frame.setResizable(true) ;}
   frameRate(60);
-  for (int i = 0; i<=25; i++){   colorMode(HSB); C[i] = color(122,270-i*13,100+i*5); } // create palette
+  for (int i = 0; i<=25; i++){ colorMode(HSB); C[i] = color(122,270-i*13,100+i*5); } // create UI color shades
   background(C[25]); noStroke();
   src=loadImage("wiki.png");
   grad=loadImage("gradient.png"); gradInvert=loadImage("gradInvert.png");
   font = loadFont("FedraTwelve-Normal-12.vlw");  textFont(font, 12); fontColor();
 
   button = new Button[6];
-  // TODO looper + actionner
+  // TODO button loop
   button[0] = new Button(d    , d, 100+5, 20 ,"new file");
   button[1] = new Button(d+110, d, 100+5, 20 ,"export");
   button[2] = new Button(d+220, d, 100+5, 20 ,"load");
   button[3] = new Button(d+330, d, 95,    20 ,"save");
-  button[4] = new Button(d+430, d, a/2-b, 20,"specimen");
+  button[4] = new Button(d+430, d, a/2-b, 20 ,"specimen");
   button[5] = new Button(d+a+a+a/2+30, d, a/2-b, 20,"render");
   
-  text("growing time", gauche+20, haut+a+c+10); if(seuilVisible) text("threshold", gauche+20, haut+a+c+55); 
+  if(seuilVisible) text("threshold", gauche+20, haut+a+c+55); 
 
-  // TODO iterations control slider
-  //cp5.addSlider("iterations", 1,1000,gauche,  haut+a+c+15, a+20, 20).setDecimalPrecision(0).setCaptionLabel("");         style1("iterations"); 
-  // TODO inclure un switch pour un export en greyScale
+  // TODO (GUI) inclure un switch pour un export en greyScale
 
   mapImg = new MapImg(gauche, haut);
   snaps = new Snap( d,  height-d-a/2 );
+  
+  mono = new MonoSlider(0, "iterations", gauche,  haut+a+c+15, a+20, 1000);  
   bi = new BiSlider[2]; 
   bi[0] = new BiSlider(6, "reaction", gauche-10, haut+a+c+150, a+20);
   bi[1] = new BiSlider(7, "diffusion", gauche-10, haut+a+c+a+a/2-60, a+20);
@@ -61,23 +61,14 @@ void preview(){
 }
 void controlEvent (ControlEvent theEvent) {
   println("got a control event from controller with name " + theEvent.getName() );
-  if ( theEvent.getName() == "iterations" )    { slider[0] = theEvent.getController().getValue(); viewing = true ;}
-  if ( theEvent.getName() == "threshold" )     { slider[1] = theEvent.getController().getValue(); viewing = true ;}
-  //if ( theEvent.isFrom(checkbox) )             { button[0] = !button[0] ;                         viewing = true ;}
 
-  if ( theEvent.getName() == "new file" ) { noLoop(); selectInput("Select your image", "fileSelected"); viewing = true ;}  
+  if ( theEvent.getName() == "new file" ) { }  
   if ( theEvent.getName() == "renderControl" ) render(); 
-  if ( theEvent.getName() == "export" )   { render(); currentI.save("testFinalz_"+frameCount+"_test.png"); }
-  if ( theEvent.getName() == "specimen" ) { }//noLoop(); selectOutput("Nomez votre spécimen", "saveSpecimen"); }
+  if ( theEvent.getName() == "export" )   {  }
+  if ( theEvent.getName() == "specimen" ) {  }
 
-  if ( theEvent.getName() == "load" ) {  noLoop();  selectInput( "Select TexTuring settings file", "loadParameters"); viewing = true ;}
-  if ( theEvent.getName() == "save" ) {  noLoop();  selectOutput("Name your TexTuring settings file", "saveParameters"); }
-  
-  for (int i = 0; i<8; i++) {  
-    if ( theEvent.getId() == i+16 ) { snaps.pressed(i); viewing = true ; }
-  }
-}
-void buttonAction(String name){
+  if ( theEvent.getName() == "load" ) {  }
+  if ( theEvent.getName() == "save" ) {   }
 }
 
 void render(){
@@ -86,10 +77,10 @@ void render(){
   image(currentI, 3*a+35+d, d ); // ,(currentI.width*(height-d))/currentI.height, height-d); 
 }
 float[][] videoCtrl = new float[4][8] ; // iniSlider, iniKnob, finSlider, finKnob
-int name = 0;
+int videoName = 0;
 String instanceVideoFolder = ""+random(0, 1);
 void saveVideo(){
-  for (int i = 1; i<=frames; i++){ name++;
+  for (int i = 1; i<=frames; i++){ videoName++;
     currentI = src.get();
     for (int j = 0; j<8; j++){
       slider[j] = map(i,0,frames,videoCtrl[0][j],videoCtrl[2][j]);
@@ -97,15 +88,15 @@ void saveVideo(){
     }
     turing2(currentI); 
     image(currentI, 3*a+35+d, d );
-    currentI.save("video/animation_"+instanceVideoFolder+"/"+name+".png");
+    currentI.save("video/animation_"+instanceVideoFolder+"/"+videoName+".png");
   }
 }
 void keyPressed(){
   if ( keyCode == CONTROL) control = true;
   if (key == 'i') src.filter(INVERT);
   if (key == '+') src.resize(int(src.width+100),0);  if (key == '-') src.resize(int(src.width-100),0);
-  if (key == 'v') { for (int i = 0; i<8; i++){ videoCtrl[0][i]=slider[i];  videoCtrl[1][i]=knob[i];  saved[i]=slider[i]+" "+knob[i] ; }              saveStrings( "video/animation_"+instanceVideoFolder+"/"+name+"-V.trm", saved); }
-  if (key == 'b') { for (int i = 0; i<8; i++){ videoCtrl[2][i]=slider[i];  videoCtrl[3][i]=knob[i];  saved[i]=slider[i]+" "+knob[i] ; } saveVideo(); saveStrings( "video/animation_"+instanceVideoFolder+"/"+name+"-B.trm", saved); }
+  if (key == 'v') { for (int i = 0; i<8; i++){ videoCtrl[0][i]=slider[i];  videoCtrl[1][i]=knob[i];  saved[i]=slider[i]+" "+knob[i] ; }              saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-V.trm", saved); }
+  if (key == 'b') { for (int i = 0; i<8; i++){ videoCtrl[2][i]=slider[i];  videoCtrl[3][i]=knob[i];  saved[i]=slider[i]+" "+knob[i] ; } saveVideo(); saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-B.trm", saved); }
   if (key == 'a') {  selectFolder("Select a folder to process:", "folderSelected");  } 
 }
 ArrayList<File> filesList = new ArrayList<File>();
@@ -130,10 +121,33 @@ void folderSelected(File selection) {
   }
 }
 void keyReleased()  { control = false; }
-void mousePressed() { for (BiSlider o : bi){ o.pressed(); } di.pressed(); }
-void mouseReleased(){ for (BiSlider o : bi){ o.released();} di.released(); button[0].pressed(); }
-void mouseMoved(){ di.mouved();  bi[0].mouved(); bi[1].mouved(); mapImg.mouved(); button[0].mouved(); }
-void mouseDragged(){ for (BiSlider o : bi) { o.dragged(); } di.dragged(); mapImg.dragged(); }
+void mousePressed() { for (BiSlider o : bi){ o.pressed(); } di.pressed(); mono.pressed(); }
+void mouseDragged(){ for (BiSlider o : bi) { o.dragged(); } di.dragged(); mono.dragged(); mapImg.dragged(); }
+void mouseMoved(){ 
+  di.mouved();  
+  bi[0].mouved(); 
+  bi[1].mouved(); 
+  mono.mouved();
+  mapImg.mouved(); 
+  for (int i = 0; i<button.length; i++){ button[i].mouved(); }
+}
+void mouseReleased(){ 
+  for (BiSlider o : bi){ o.released(); mono.released(); } 
+  for (int i = 0; i<snaps.snap.length; i++) { snaps.pressed(i); }
+  di.released(); 
+
+  if ( button[0].over ) { noLoop(); selectInput("Select your image", "fileSelected"); viewing = true ; } // "new file"
+  if ( button[1].over ) { render(); currentI.save("testFinalz_"+frameCount+"_test.png"); }               // "export"  
+  if ( button[2].over ) { noLoop();  selectInput( "Select TexTuring settings file", "loadParameters"); viewing = true ; } // "load"    
+  if ( button[3].over ) { noLoop();  selectOutput("Name your TexTuring settings file", "saveParameters"); } // "save"    
+  if ( button[4].over ) { noLoop(); selectOutput("Nomez votre spécimen", "saveSpecimen"); }              // "specimen"
+  if ( button[5].over ) { render(); } // "render"  
+
+/*  if ( theEvent.getName() == "iterations" )    { slider[0] = theEvent.getController().getValue(); viewing = true ;}
+  if ( theEvent.getName() == "threshold" )     { slider[1] = theEvent.getController().getValue(); viewing = true ;}
+  if ( theEvent.isFrom(checkbox) )             { button[0] = !button[0] ;     viewing = true ;}
+*/
+}
 
 void fileSelected(File selection) { lastPath=selection.getAbsolutePath(); 
   src=loadImage(lastPath); 
