@@ -9,7 +9,6 @@ class Button {
   int x, y, w, h;
   String name ; 
   boolean over = false;
-
   Button(int tmpX, int tmpY, int tmpW, int tmpH, String tmpName){ 
     y=tmpY; x=tmpX; w=tmpW; h=tmpH;
     name = tmpName;
@@ -19,10 +18,6 @@ class Button {
   void mouved(){ 
     over = isOver(x, y, w, h) ;
     update();
-  }
-
-  void pressed(){
-    if (over) buttonAction(name);
   }
 
   void update(){
@@ -72,27 +67,68 @@ class Snap {
   Snap (int tx,int ty){ 
     x=tx; y=ty;
     for (int i = 0; i<snap.length; i++) {  
-      snapButton[i] = new Button(x+i%6*(a/2+b), y+floor(i/6)*(a/2+b), a/2, a/2, "snap"+i );  
-      style1("snap" +i);
+      snapButton[i] = new Button( x+i%6*(a/2+b), y+floor(i/6)*(a/2+b), a/2, a/2, "snap" );  
     }
   }
+
   void pressed (int off){
-    if(snap[off]==null && currentI!=null) {  // save snap
-      snap[off] = currentI.get(); 
-      for (int i = 0; i<8; i++){ snapVar[off][i] = slider[i]+" "+knob[i] ; } 
-      PImage tmp1 = snap[off].get();
-      tmp1.resize( srcMin.width/2, srcMin.height/2 );
-      PImage tmp2 = snap[off].get( snap[off].width/2, snap[off].height/2, srcMin.width/2, srcMin.height/2 );
-      // TODO : display snaped img on snapButtons
-      //snapButton[off].setImages(tmp1,tmp2,tmp1).hide().setSize(srcMin.width/2, srcMin.height/2).show() ;  
-      fill(C[25]); rect( x+off%6*(a/2+b) , y+floor(off/6)*(a/2+b), a/2, a/2); 
+    if ( isOver(x, y, w, h) ){
+      if(snap[off]==null && currentI!=null) {  // save snap
+        snap[off] = currentI.get(); 
+        for (int i = 0; i<8; i++){ snapVar[off][i] = slider[i]+" "+knob[i] ; } 
+        PImage tmp1 = snap[off].get();
+        tmp1.resize( srcMin.width/2, srcMin.height/2 );
+        PImage tmp2 = snap[off].get( snap[off].width/2, snap[off].height/2, srcMin.width/2, srcMin.height/2 );
+        // TODO : display snaped img on snapButtons
+        //snapButton[off].setImages(tmp1,tmp2,tmp1).hide().setSize(srcMin.width/2, srcMin.height/2).show() ;  //oldway
+        fill(C[25]); rect( x+off%6*(a/2+b) , y+floor(off/6)*(a/2+b), a/2, a/2); 
+      }
+      if (snap[off]!=null) {  // load snap
+        currentI = snap[off];
+        image(currentI, 3*a+35+d, d ); // ,(currentI.width*(height-d))/currentI.height, height-d); 
+        setParam(snapVar[off]);
+      }      
+      viewing = true ;
     }
-    if (snap[off]!=null) {  // load snap
-      currentI = snap[off];
-      image(currentI, 3*a+35+d, d ); // ,(currentI.width*(height-d))/currentI.height, height-d); 
-      setParam(snapVar[off]);
-    }      
   }
+}
+class MonoSlider {
+  String name; int ref, x, y, w, range, m, sh=20; float pos; boolean press = false, over = false;
+  MonoSlider(int tref, String tname, int tx, int ty, int tw, int trange){ 
+    ref=tref; name=tname; x=tx+10; y=ty; w=tw-10; range=trange;
+    setup();
+  }
+  void mouved(){
+    if ( isOver(x, y+sh, w, sh ) ) { over = true ; setup(); }
+    else { over = false ; setup(); } 
+  }
+  void pressed (){
+    if ( over ) { press = true; pos = mouseX; }
+  }  
+  void released (){ 
+    if (press) di.setupImg();
+    press = false;  
+  }
+  void dragged () {
+    if ( press ) {
+      m   = mouseX ;
+      off = (control) ? 20 : 1 ;
+      slider[ref] += map(m-pos,0,w,0,range)/off;    pos=m; 
+      slider[ref] = constrain(slider[ref], 0, range);
+      setup(); 
+      viewing = true ;
+    }
+  } 
+  void setup(){
+    float sli = slider[ref]*w/range;
+    pushMatrix(); translate(x, y); 
+        fontColor(); text(name, 0 , -10); textAlign(CENTER);
+        fill(colorElemBg); rect(-18,0,w+26,3*sh);  //bg
+        fill(C[18]); rect(0,sh+3,w-10,sh-6); // bg slider
+        text(nfs(sli,0,1), sli, sh-3-4);  // number display
+        fill(C[15]); rect(0, sh+3, sli, sh-6); // slider
+    popMatrix(); textAlign(LEFT);
+  }  
 }
 class BiSlider {
   String name; int ref, x, y, s, m, sh=20; float pos1, pos2, pos3, zone; char over;
