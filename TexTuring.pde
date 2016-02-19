@@ -2,7 +2,7 @@ int frames = 30;
 float[] slider = {0 ,40 ,20 ,0 ,20 ,20 ,20 ,20}; float[] knob = {60 ,0 ,0 ,0 ,0 ,0 ,0 ,0};
 Button[] button ; BiSlider[] bi ; DiSlider di ; MonoSlider mono; Snap snaps ; CheckBox checkbox; MapImg mapImg;
 PFont font;
-boolean control = false, live = true, map = false, viewing = false, seuilVisible=true, greyScale = false;
+boolean control = false, live = true, map = false, viewing = false, seuilVisible=true, greyScale = true;
 String[] saved ; 
 String lastPath ;
 PImage src, view, currentI, srcMin, grad,gradInvert;
@@ -35,7 +35,7 @@ void setup() {
   mapImg = new MapImg(gauche, haut);
   snaps = new Snap( d,  height-d-a/2 );
   
-  mono = new MonoSlider(0, "iterations", gauche,  haut+a+c+15, a+20, 1000);  
+  mono = new MonoSlider(0, "iterations", gauche,  haut+a+c+15, a+20, 2000);  
   bi = new BiSlider[2]; 
   bi[0] = new BiSlider(6, "reaction", gauche-10, haut+a+c+150, a+20);
   bi[1] = new BiSlider(7, "diffusion", gauche-10, haut+a+c+a+a/2-60, a+20);
@@ -103,8 +103,11 @@ ArrayList<File> filesList = new ArrayList<File>();
 
 void folderSelected(File selection) {
   if (selection!=null) {
+// export PNG
+currentI.save(selection.getAbsolutePath()+"/"+frameCount+"_test.png");
 
-    File file = new File(selection.getAbsolutePath());
+// compute multi-frames for video txture
+/*    File file = new File(selection.getAbsolutePath());
     File[] files = file.listFiles();
     for (int i = 0; i < files.length; i++) {
       filesList.add(files[i]);
@@ -116,7 +119,7 @@ void folderSelected(File selection) {
     src=loadImage(selection.getAbsolutePath()+"/"+f.getName()); 
     src.filter(GRAY);
     render(); 
-    currentI.save("video/video_"+folder+"/"+count+".png");
+    currentI.save("video/video_"+folder+"/"+count+".png");*/
 
   }
 }
@@ -137,7 +140,7 @@ void mouseReleased(){
   di.released(); 
 
   if ( button[0].over ) { noLoop(); selectInput("Select your image", "fileSelected"); viewing = true ; } // "new file"
-  if ( button[1].over ) { render(); currentI.save("testFinalz_"+frameCount+"_test.png"); }               // "export"  
+  if ( button[1].over ) { render(); selectFolder("Select a folder to process:", "folderSelected"); }               // "export"  
   if ( button[2].over ) { noLoop();  selectInput( "Select TexTuring settings file", "loadParameters"); viewing = true ; } // "load"    
   if ( button[3].over ) { noLoop();  selectOutput("Name your TexTuring settings file", "saveParameters"); } // "save"    
   if ( button[4].over ) { noLoop(); selectOutput("Nomez votre spécimen", "saveSpecimen"); }              // "specimen"
