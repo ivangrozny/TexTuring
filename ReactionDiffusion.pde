@@ -44,21 +44,21 @@ float lapU, lapV;
       for (int k = 0; k<4; k++){
         if(map==false) {
           fkuv[i][j][k] = map( brightness(img.pixels[j*W+i]),0,255, 
-            map(slider[k+4],0,controlSize[k],0,maxi[k]), 
-            map(knob[k+4],0,controlSize[k],0,maxi[k]));
-            //map(slider[k+4],0,controlSize[k],0,maxi[k]) + map(knob[k+4],0,controlSize[k],0,maxi[k]));
+            map(params.b[k],0,controlSize[k],0,maxi[k]), 
+            map(params.w[k],0,controlSize[k],0,maxi[k]));
+            //map(Slider[k+4],0,controlSize[k],0,maxi[k]) + map(wb[k+4],0,controlSize[k],0,maxi[k]));
         } 
       }
       if(map==true) {
         fkuv[i][j][0] = map( i, 0, W, 0, maxi[0]);
         fkuv[i][j][1] = map( j, 0, W, maxi[1], 0);  
-        fkuv[i][j][2] = map(slider[6],0,controlSize[2],0,maxi[2]);
-        fkuv[i][j][3] = map(slider[7],0,controlSize[3],0,maxi[3]);
+        fkuv[i][j][2] = map(params.b[2],0,controlSize[2],0,maxi[2]);
+        fkuv[i][j][3] = map(params.w[3],0,controlSize[3],0,maxi[3]);
       }
     }
   }
 
-  for (int n = 0; n<slider[0]*6+1; n++){  // reaction diffusion
+  for (int n = 0; n<params.o[0]*6+1; n++){  // reaction diffusion
     for (int i = 0; i < W; i++) {
       for (int j = 0; j < H; j++) {
 
@@ -86,7 +86,7 @@ float lapU, lapV;
         V[i][j] += dV[i][j];
       }
     }
-    surface.setTitle ("TexTuring - computing ["+int( (100*n)/(slider[0]*7))+"%]" );
+    surface.setTitle ("TexTuring - computing ["+int( (100*n)/(params.o[0]*7+1))+"%]" );
   }
   
   img.loadPixels();
@@ -95,9 +95,9 @@ float lapU, lapV;
       for (int j = 0; j < H; j++) {
         pShift = int( U[i][j]*255 ) ;
 
-        if( !greyScale && pShift<slider[1] ) { img.pixels[j*W+i] = color(0); } else { img.pixels[j*W+i] = color(255); }
+        if( !greyScale && pShift<params.o[1] ) { img.pixels[j*W+i] = color(0); } else { img.pixels[j*W+i] = color(255); }
         if( greyScale ) img.pixels[j*W+i] =  0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
-        if( map && pShift<slider[1] ) { img.pixels[j*W+i] = C[18]; } else if(map){ img.pixels[j*W+i] = color(255); }
+        if( map && pShift<params.o[1] ) { img.pixels[j*W+i] = C[18]; } else if(map){ img.pixels[j*W+i] = color(255); }
 
       }
     }
