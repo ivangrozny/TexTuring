@@ -58,7 +58,7 @@ float lapU, lapV;
     }
   }
 
-  for (int n = 0; n<params.o[0]*6+1; n++){  // reaction diffusion
+  for (int n = 0; n< params.o[0] * 6 +1 ; n++){  // reaction diffusion
     for (int i = 0; i < W; i++) {
       for (int j = 0; j < H; j++) {
 

@@ -53,10 +53,10 @@ class Button extends GuiElement {
 
   void pressed() {
     if ( name == "new file" ) { selectInput("Select your image", "fileSelected"); viewing = true ; } 
-    if ( name == "export" ) { render(); selectFolder("Select a folder to process:", "folderSelected"); }       
-    if ( name == "load" ) {     selectInput( "Select TexTuring settings file", "params.loadFromFile"); viewing = true ; } 
-    if ( name == "save" ) {     selectOutput("Name your TexTuring settings file", "saveParameters"); } 
-    if ( name == "specimen" ) { selectOutput("Nomez votre spécimen", "saveSpecimen"); }
+    if ( name == "export" ) { selectFolder("Select a folder to process:", "folderSelected"); }       
+    if ( name == "load" ) {     selectInput( "Select TexTuring settings file", "loadFile"); viewing = true ; } 
+    if ( name == "save" ) {     selectOutput("Name your TexTuring settings file", "saveFile"); } 
+    if ( name == "specimen" ) {  }
     if ( name == "render" ) { render(); }
   }
 }

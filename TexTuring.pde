@@ -36,8 +36,7 @@ void setup() {
   // TODO (GUI) inclure un switch pour un export en greyScale
   mapImg = new MapImg(gauche, haut);
   
-
-  params.loadFromFile( new File(dataPath("default.texturing")) );
+  params.loadFile( new File(dataPath("default.texturing")) );
   fileSelected( new File(dataPath("wiki.png")) );                        // file selected at TexTuring launch
   //selectInput("Select a file to process:", "fileSelected"); noLoop();  // file selector at TexTuring launch
 }
@@ -58,15 +57,14 @@ class Parameters {
 
     for (int i = 0; i<7; i++){ 
       if (i<4) saveData[i] = b[i]+" "+w[i] ; 
-      if (i>3) saveData[i] = o[i-4]+" " ; 
+      if (i>3) saveData[i] = o[i-4]+"" ; 
     } 
-    if ( match(_filePath, ".TexTuring") != null ) _filePath += ".TexTuring" ;
+    if ( match(_filePath, ".TexTuring") == null ) _filePath += ".TexTuring" ;
     saveStrings( _filePath, saveData) ;
   }
 
-  void loadFromFile( File _file ){ 
-    load( loadStrings(_file.getAbsolutePath()) );
-  }
+  void loadFile( File _file ){ if(_file != null) load( loadStrings(_file.getAbsolutePath()) ); }
+  void saveFile( File _file ){ if(_file != null) save( _file.getAbsolutePath() ); }
 
   void load( String[] _data ){
     for (int i = 0; i<4; i++) { 
@@ -75,7 +73,7 @@ class Parameters {
       w[i] = float( tmp[1] ); 
     }
     o[0] = int(_data[4] );
-    o[1]  = int(_data[5] );
+    o[1] = int(_data[5] );
     o[2] = int(_data[6] );
     updateGui();
   }
@@ -92,7 +90,8 @@ class Parameters {
     viewing = true ;
   }
 }
-
+void loadFile( File _file ){ params.loadFile( _file ); }
+void saveFile( File _file ){ params.saveFile( _file ); }
 
 void preview(){
   //fill(C[25]); rect(a+b+d, d+haut, a/2, a/2); 
@@ -110,6 +109,7 @@ void render(){
  // export PNG
 void folderSelected(File selection) {
   if (selection!=null) {
+  render(); 
   currentI.save(selection.getAbsolutePath()+"/"+frameCount+"_test.png");
   }
 }
@@ -158,6 +158,10 @@ void keyPressed(){
 //  if (key == 'v') { for (int i = 0; i<8; i++){ videoCtrl[0][i]=Slider[i];  videoCtrl[1][i]=wb[i];  saved[i]=Slider[i]+" "+wb[i] ; }              saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-V.trm", saved); }
 //  if (key == 'b') { for (int i = 0; i<8; i++){ videoCtrl[2][i]=Slider[i];  videoCtrl[3][i]=wb[i];  saved[i]=Slider[i]+" "+wb[i] ; } saveVideo(); saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-B.trm", saved); }
   if (key == 'a') {  selectFolder("Select a folder to process:", "folderSelected");  } 
+  if (key == 't') {for (int i = 0; i<3; i++){
+    println("o[]: "+params.o[i]);
+    println("b[]: "+params.b[i]);
+  }}
 }
 void keyReleased()  { 
   control = false; 
