@@ -21,8 +21,8 @@ float lapU, lapV;
 
     for (int i = 0; i < W; i++) {
       for (int j = 0; j < H; j++) {        
-        U[i][j] = 0.8*(noise(i*noiseZoom,j*noiseZoom));
-        V[i][j] = 0.45*(noise(i*noiseZoom,j*noiseZoom));
+        U[i][j] = 0.8 *( noise(i*noiseZoom,j*noiseZoom) );
+        V[i][j] = 0.45*( noise(i*noiseZoom,j*noiseZoom) );
         //U[i][j] = random(0,0.5);
         //V[i][j] = random(0,0.25);
       }
@@ -42,14 +42,14 @@ float lapU, lapV;
   for (int i = 0; i<W; i++){
     for (int j = 0; j<H; j++){
       for (int k = 0; k<4; k++){
-        if(map==false) {
+        if ( updateDiSliderImage == false ) {
           fkuv[i][j][k] = map( brightness(img.pixels[j*W+i]),0,255, 
             map(params.b[k],0,controlSize[k],0,maxi[k]), 
             map(params.w[k],0,controlSize[k],0,maxi[k]));
             //map(Slider[k+4],0,controlSize[k],0,maxi[k]) + map(wb[k+4],0,controlSize[k],0,maxi[k]));
         } 
       }
-      if(map==true) {
+      if ( updateDiSliderImage == true) {
         fkuv[i][j][0] = map( i, 0, W, 0, maxi[0]);
         fkuv[i][j][1] = map( j, 0, W, maxi[1], 0);  
         fkuv[i][j][2] = map(params.b[2],0,controlSize[2],0,maxi[2]);
@@ -97,7 +97,8 @@ float lapU, lapV;
 
         if( !greyScale && pShift<params.o[1] ) { img.pixels[j*W+i] = color(0); } else { img.pixels[j*W+i] = color(255); }
         if( greyScale ) img.pixels[j*W+i] =  0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
-        if( map && pShift<params.o[1] ) { img.pixels[j*W+i] = C[18]; } else if(map){ img.pixels[j*W+i] = color(255); }
+        if( updateDiSliderImage && pShift<params.o[1] ) { img.pixels[j*W+i] = C[18]; } 
+        else if ( updateDiSliderImage ) { img.pixels[j*W+i] = color(255); }
 
       }
     }
