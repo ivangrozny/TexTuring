@@ -13,6 +13,7 @@ class GuiElement {
     name = _name;
     if (name=="iterations") ref = 0 ;
     if (name=="threshold") ref = 1 ;
+    if (name=="resolution") ref = 2 ;
     if (name=="reaction") ref = 2 ;
     if (name=="diffusion") ref = 3 ;
   }
@@ -118,7 +119,6 @@ class CheckBox extends GuiElement {
 
 class Slider extends GuiElement {
   int range; 
-  float pos; 
   boolean press = false;
   
   Slider(Rect _coords, String _name, int _range){ 
@@ -128,7 +128,6 @@ class Slider extends GuiElement {
   }
   void pressed (){
     press = true; 
-    pos = mouseX;
   }
   void released (){ 
     if (press) updateDiSliderImage = true;
@@ -137,15 +136,14 @@ class Slider extends GuiElement {
   void dragged () {
     if ( press ) {
       int off = (control) ? 20 : 1 ;
-      int m = mouseX ;
-      params.o[ref] = (int)constrain(params.o[ref] + map(m-pos,0,w,0,range)/off , 0, range);
-      pos = m; 
+      params.o[ref] = (int)constrain(  params.o[ref] + map(mouseX-pmouseX,0,coords.size.x,0,range) , 0, range);
+      viewing = true; 
       update(); 
-      viewing = true ; 
     }
   }
   void update(){
-    float b = params.o[ref]*w/range;
+    //float b = params.o[ref]*w/range;
+    float b = map( params.o[ref], 0,range, 0,coords.size.x ) ;
     Vector2 s = new Vector2(coords.size);
 
     fill( isOver() ? C[12] : C[17] ); 

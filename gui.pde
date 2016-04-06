@@ -8,8 +8,7 @@ class GuiWindow {
     elements = new ArrayList<GuiElement>();
   }
 
-  void setupGui(){
-
+  void setupGui(){  
     try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) { e.printStackTrace(); }  //  platform specific UI
     for (int i = 0; i<=25; i++){ colorMode(HSB); C[i] = color(122,270-i*13,100+i*5); } // create UI color shades
     background(C[25]); noStroke();
@@ -22,10 +21,11 @@ class GuiWindow {
     elements.add(new Button(new Rect( d+330, d, 95,    20       ), "save"));
     elements.add(new Button(new Rect( d+430, d, a/2-b, 20       ), "specimen"));
     elements.add(new Button(new Rect( d+a+a+a/2+30, d, a/2-b, 20), "render"));
-    elements.add(new   Slider(new Rect( gauche,  haut+a+c+15, a+20, 20), "iterations", 2000));  
-
+    elements.add(new   Slider(new Rect( gauche,  haut+a+c+15, a+20, 20), "iterations", 3000));  
     elements.add(new CheckBox(new Rect( gauche,  haut+a+c+65, 20, 20), "check threshold"));  
     elements.add(new   Slider(new Rect( gauche+25,  haut+a+c+65, a-5, 20), "threshold", 255));  
+    elements.add(new   Slider(new Rect( gauche,  haut+a+c+100, a+20, 20), "resolution", 255));
+
     elements.add(new BiSlider(new Rect( gauche-10, haut+a+c+150, a+20 , 60), "reaction"));
     elements.add(new BiSlider(new Rect( gauche-10, haut+a+c+a+a/2-60, a+20, 60), "diffusion"));
     elements.add(new DiSlider(new Rect( gauche+a+80+b, haut+a+c+10, a+20, a+20), "thickness", "brightness"));
@@ -33,7 +33,6 @@ class GuiWindow {
       elements.add(new Snap( new Rect( d+i%6*(a/2+b), height-d-a/2+floor(i/6)*(a/2+b), a/2, a/2 ) , "snap"+i ));  
     }
   }
-
 
   void injectMousePressed() {
     for (GuiElement elem : elements) {
@@ -73,11 +72,9 @@ void buttonPressed( GuiElement _elem ){
     if ( _elem.name == "load" ) {     selectInput( "Select TexTuring settings file", "loadFile"); viewing = true ; } 
     if ( _elem.name == "save" ) {     selectOutput("Name your TexTuring settings file", "saveFile"); } 
     if ( _elem.name == "specimen" ) {  }
-    if ( _elem.name == "render" ) { render(); }
+    if ( _elem.name == "render" ) { render(src, src.width); }
     if ( _elem.name == "check threshold" ) { greyScale = !greyScale ; preview() ; }
 }
-
-
 
 color[] C = new color[26];
 color bg = #EDEDED;

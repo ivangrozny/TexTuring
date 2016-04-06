@@ -95,8 +95,8 @@ float lapU, lapV;
       for (int j = 0; j < H; j++) {
         pShift = int( U[i][j]*255 ) ;
 
-        if( !greyScale && pShift<params.o[1] ) { img.pixels[j*W+i] = color(0); } else { img.pixels[j*W+i] = color(255); }
-        if( greyScale ) img.pixels[j*W+i] =  0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
+        img.pixels[j*W+i] = 0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
+
         if( updateDiSliderImage && pShift<params.o[1] ) { img.pixels[j*W+i] = C[18]; } 
         else if ( updateDiSliderImage ) { img.pixels[j*W+i] = color(255); }
 

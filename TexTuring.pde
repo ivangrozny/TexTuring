@@ -1,10 +1,12 @@
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.BorderLayout;
-boolean control = false, live = true, updateDiSliderImage = false, viewing = false, greyScale = false;
-PImage src, view, currentI, srcMin ;
+boolean control = false, live = true, updateDiSliderImage = false, viewing = false, greyScale = true;
+PImage src, currentI, srcMin ;
 int viewX, viewY,h,w, off, offX, offY, viewSize=100 ;
 String lastPath ;
+
+File lastDirectory = null;
 
 GuiWindow gui ;
 Parameters params ;
@@ -18,7 +20,6 @@ void setup() {
   //selectInput("Select a file to process:", "fileSelected");            // file selector at TexTuring launch
   params.loadFile( new File(dataPath("default.texturing")) );
   
-
   //frame.setIconImage( getToolkit().getImage("icone.ico") ); 
   //if (frame != null) { frame.setResizable(true) ;}
 }
@@ -26,7 +27,7 @@ void setup() {
 void draw() {
   if ( viewing ) preview() ;
 }
-
+  
 void mousePressed (){ gui.injectMousePressed (); }
 void mouseDragged (){ gui.injectMouseDragged (); }
 void mouseMoved   (){ gui.injectMouseMoved   (); }
@@ -34,49 +35,64 @@ void mouseReleased(){ gui.injectMouseReleased(); }
 
 
 void preview(){
-  //fill(C[25]); rect(a+b+d, d+haut, a/2, a/2); 
-  view = src.get( viewX,viewY, viewSize, viewSize); turing2(view); 
-  viewing = false ;
+  PImage view = src.get( viewX,viewY, viewSize, viewSize); 
+  view.resize((int) params.o[2]*view.width/100+5, 0 );
+  turing2(view); 
+  view.resize(viewSize, 0 );
+  if (greyScale) view.filter( THRESHOLD, map(params.o[1],0,255,0,1) );
   imageMode(CENTER); image(view, gauche+srcMin.width+(a-srcMin.width+a+a/2)/2, haut+a/2); imageMode(CORNER);
+  viewing = false ;
 }
-void render(){
-  currentI = src.get();
-  turing2(currentI); 
-  image(currentI, 3*a+35+d, d ); // ,(currentI.width*(height-d))/currentI.height, height-d); 
+PImage render(PImage imageIn, int widthOut ){
+  PImage image = imageIn.get();
+  image.resize((int) params.o[2]*image.width/100, 0 );
+  turing2(image);
+  image.resize( widthOut, 0 );
+  
+  if (greyScale) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+
+  image(image, 3*a+35+d, d, height*image.width/image.height, height ); // display image on GUI
+  return image ;
 }
 
 void exportImage() {
-  JTextField wField = new JTextField(5); wField.setText(src.width+"");
-  JTextField hField = new JTextField(5); hField.setText(src.height+"");
-  JComboBox extField = new JComboBox( new DefaultComboBoxModel(new String[]{"PNG","SVG","GIF"}) );
-  JFileChooser pathField = new JFileChooser(); 
-  //pathField.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-//pathField.setFileFilter(new FileNameExtensionFilter("description", "png")); //  Cannot find a class or type named "FileNameExtensionFilter" ???
+  JTextField nameField = new JTextField(12); nameField.setText( "export-"+int(random(9999)) );
+  JTextField sizeField = new JTextField(5); sizeField.setText( ""+(int) params.o[2]*src.width/100 );
+  JComboBox extField = new JComboBox( new DefaultComboBoxModel(new String[]{".png",".svg",".gif"}) );
+  JFileChooser pathField = new JFileChooser();
 
-  JPanel p1 = new JPanel();
-  p1.add(pathField);
-  JPanel p2 = new JPanel();
+  if (lastDirectory != null) pathField.setCurrentDirectory( lastDirectory ); 
+  pathField.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+  JPanel p1 = new JPanel(); p1.add(pathField);
+  JPanel p2 = new JPanel(); 
+  p2.add(new JLabel("Image name : ")); p2.add(nameField);
   p2.add(extField);
-  p2.add(Box.createHorizontalStrut(25)); p2.add(new JLabel("Pixels size :     width")); p2.add(wField);
-  p2.add(Box.createHorizontalStrut(15)); p2.add(new JLabel("height")); p2.add(hField);
+  p2.add(Box.createHorizontalStrut(30)); p2.add(new JLabel("Image width: ")); p2.add(sizeField); p2.add(new JLabel(" pixels"));
   JPanel outer = new JPanel(new BorderLayout());
   outer.add(p1, BorderLayout.NORTH);
   outer.add(p2, BorderLayout.CENTER);
 
   int result = JOptionPane.showConfirmDialog(null, outer, "Select export options", JOptionPane.OK_CANCEL_OPTION);
   if (result == JOptionPane.OK_OPTION) {
-    System.out.println("x : " + wField.getText());
-    System.out.println("y : " + hField.getText());
-    System.out.println("ext: "+ extField.getSelectedItem());
+    println( pathField.getCurrentDirectory()  );
 
-    File file = pathField.getSelectedFile();
-    String path = file.getAbsolutePath();
-    if ( extField.getSelectedItem() == "PNG" ){
-      render();  // (kevin) open a new thread to start render when options pop ?
-      currentI.save( path + ".png" );
+    lastDirectory = pathField.getCurrentDirectory();
+    String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() + extField.getSelectedItem() ;  
+    println("path: "+ path );
+
+    // (kevin) open a new thread to start render when options pop ?
+    switch ( extField.getSelectedItem()+"" ) {
+      case ".png" : 
+      //image(render(src, int(sizeField.getText()) ),0,0);
+      render(src, int(sizeField.getText()) ).save( path ); 
+      break;
+      case ".svg" : svgConverter( render(src, int(sizeField.getText()) ), 1, path ); break;  
     }
+
   }
 }
+
 void fileSelected(File selection) { 
   lastPath = selection.getAbsolutePath(); 
   src = loadImage(lastPath); 
@@ -93,7 +109,8 @@ void fileSelected(File selection) {
 void saveSpecimen(File selection){ 
   //for (int i = 0; i<8; i++){ saved[i] = Slider[i]+" "+wb[i] ; } 
   //saveStrings( selection.getAbsolutePath()+".trm", saved) ;
-  render(); //currentI.save(selection.getAbsolutePath()+".png"); 
+  //render(); 
+  //currentI.save(selection.getAbsolutePath()+".png"); 
 }
 
 float[][] videoCtrl = new float[4][8] ; // iniSlider, iniwb, finSlider, finwb
