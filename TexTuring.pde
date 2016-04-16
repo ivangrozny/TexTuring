@@ -1,11 +1,15 @@
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.BorderLayout;
-boolean control = false, live = true, updateDiSliderImage = false, viewing = false, greyScale = true;
-PImage src, currentI, srcMin ;
-int viewX, viewY,h,w, off, offX, offY, viewSize=100 ;
-String lastPath ;
+import java.awt.image.BufferedImage;
 
+boolean control = false, live = true, updateDiSliderImage = false, viewing = false, threshold = true;
+boolean synchroScroll = false;
+PImage src ;
+int h,w, off, offX, offY, viewSize=100 ;
+float lastRenderTime;
+
+String lastPath ;
 File lastDirectory = null;
 
 GuiWindow gui ;
@@ -13,6 +17,7 @@ Parameters params ;
 
 void setup() {
   size(1350, 720); //size(displayWidth, displayHeight);
+  frameRate(20);
   gui = new GuiWindow();
   params = new Parameters();
   gui.setupGui();
@@ -25,33 +30,28 @@ void setup() {
 }
 
 void draw() {
-  if ( viewing ) preview() ;
+ if ( viewing )       gui.elements.get(0).update() ;
+ if ( synchroScroll ) gui.elements.get(0).dragged();
+
+ if (pmouseX!=mouseX || pmouseY!=mouseY) gui.injectMouseMoved  ();
+ if ((pmouseX!=mouseX || pmouseY!=mouseY) && mousePressed) gui.injectMouseDragged ();
 }
-  
+
 void mousePressed (){ gui.injectMousePressed (); }
-void mouseDragged (){ gui.injectMouseDragged (); }
-void mouseMoved   (){ gui.injectMouseMoved   (); }
 void mouseReleased(){ gui.injectMouseReleased(); }
+void mouseWheel(processing.event.MouseEvent event) { gui.injectMouseWheel(event.getCount()); }
 
-
-void preview(){
-  PImage view = src.get( viewX,viewY, viewSize, viewSize); 
-  view.resize((int) params.o[2]*view.width/100+5, 0 );
-  turing2(view); 
-  view.resize(viewSize, 0 );
-  if (greyScale) view.filter( THRESHOLD, map(params.o[1],0,255,0,1) );
-  imageMode(CENTER); image(view, gauche+srcMin.width+(a-srcMin.width+a+a/2)/2, haut+a/2); imageMode(CORNER);
-  viewing = false ;
-}
 PImage render(PImage imageIn, int widthOut ){
   PImage image = imageIn.get();
-  image.resize((int) params.o[2]*image.width/100, 0 );
+  int imgWidth = (int)params.o[2]*image.width/100; if (imgWidth<5) imgWidth = 5;
+  image.resize(imgWidth, 0 );
   turing2(image);
-  image.resize( widthOut, 0 );
   
-  if (greyScale) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+  //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
+  BufferedImage scaledImg = Scalr.resize( (BufferedImage) image.getNative(), widthOut);  // load PImage to bufferImage
+  image = new PImage(scaledImg);
 
-  image(image, 3*a+35+d, d, height*image.width/image.height, height ); // display image on GUI
+  if (threshold) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
   return image ;
 }
 
@@ -95,17 +95,16 @@ void exportImage() {
 
 void fileSelected(File selection) { 
   lastPath = selection.getAbsolutePath(); 
-  src = loadImage(lastPath); 
-  src.filter(GRAY);
+  PImage tmp = loadImage(lastPath);
+  tmp.filter(GRAY);
+  src = createImage(tmp.width, tmp.height, ALPHA);
+  src.copy(tmp,0,0,src.width, src.height,0,0,src.width, src.height);
   w = src.width;
   h = src.height;
-  if (w>h) { srcMin = src.get(); srcMin.resize(a,0); }
-  if (w<=h) { srcMin = src.get(); srcMin.resize(0,a); }
-
   gui.update();
-
   viewing = true ; 
 }
+
 void saveSpecimen(File selection){ 
   //for (int i = 0; i<8; i++){ saved[i] = Slider[i]+" "+wb[i] ; } 
   //saveStrings( selection.getAbsolutePath()+".trm", saved) ;

@@ -2,7 +2,7 @@
 class Parameters {
   float[] b = {0 ,0 ,0 ,0} ; // R&D black handle
   float[] w = {0 ,0 ,0 ,0} ; // R&D white handle
-  int[]   o = {0, 0, 0} ; // iterations, threshold, resolution
+  int[]   o = {0, 0, 200} ; // iterations, threshold, resolution
   Parameters() {  }
 
   void save(String _filePath){

@@ -32,9 +32,15 @@ class GuiElement {
   void drawRect( Rect r) {
      rect(r.pos.x, r.pos.y,r.size.x,r.size.y); 
   }
+  void drawImage(PImage i, Rect r) {
+     image(i, r.pos.x, r.pos.y,r.size.x,r.size.y); 
+  }
   void drawText( Rect r, String text) {
      text(text, coords.pos.x + 5, coords.pos.y);
   }
+  PImage viewImg;
+  void renderView() {}
+  void scroll(int scroll) {}
 }
 
 
@@ -136,11 +142,12 @@ class Slider extends GuiElement {
   void dragged () {
     if ( press ) {
       int off = (control) ? 20 : 1 ;
-      params.o[ref] = (int)constrain(  params.o[ref] + map(mouseX-pmouseX,0,coords.size.x,0,range) , 0, range);
-      viewing = true; 
+      params.o[ref] = (int)constrain(  params.o[ref] + map(mouseX-pmouseX,0,coords.size.x,0,range) , 1, range);
       update(); 
+      viewing = true; 
     }
   }
+
   void update(){
     //float b = params.o[ref]*w/range;
     float b = map( params.o[ref], 0,range, 0,coords.size.x ) ;
@@ -152,43 +159,94 @@ class Slider extends GuiElement {
         fill(C[15]); rect(0, 3, b, s.y-6); // Slider
         fill(colorFont); 
         text(name, 0 , -10);
-        text(nfs(b,0,1), b, s.y-3-4);  // number display
+        text((int)b, b, s.y-3-4);  // number display
     popMatrix();
   }  
 }
 
-
-class MapImg extends GuiElement {
-  Vector2 viewPos ;
-  MapImg (Rect _coords) { 
-    super(_coords, "mapImg");
-    viewPos = new Vector2(0,0);
+class ViewPort extends GuiElement { 
+  Rect viewZone ;
+  Rect renderZone ;
+  PImage srcMin ;
+  PImage viewImg ;
+  float zoom = 1 ;
+  int centerRectX, centerRectY ;
+  ViewPort (Rect _coords) { 
+    super(_coords, "preview");
+    viewZone   = new Rect(0,0,coords.size.x, coords.size.y); // from top left of input src
+    renderZone = new Rect(coords.pos.x, coords.pos.y, 100, 100); 
+    srcMin  = createImage(100, 100, ALPHA);
+    viewImg = createImage(int(coords.size.x), int(coords.size.y), ALPHA);
   }
 
-  void dragged(){
-    if ( isOver() ) {  // pre-view position
-      viewX = (int)constrain( (mouseX-coords.pos.x)*w/srcMin.width -viewSize/2 ,0,w-viewSize-1) ; 
-      viewY = (int)constrain( (mouseY-coords.pos.y)*h/srcMin.height-viewSize/2 ,0,h-viewSize-1) ;
-      viewPos.x = mouseX ; 
-      viewPos.y = mouseY ;
-      update();
+  void dragged() {
+    synchroScroll = false ;
+    if ( isOver() ) {
+      viewZone.pos.x = constrain( viewZone.pos.x+pmouseX-mouseX, 0, (src.width -viewZone.size.x > 0) ? src.width -viewZone.size.x : 0 ) ;
+      viewZone.pos.y = constrain( viewZone.pos.y+pmouseY-mouseY, 0, (src.height-viewZone.size.y > 0) ? src.height-viewZone.size.y : 0 ) ;
+      updateView();
+      
       viewing = true ;
-    } 
+    }
+  }
+  void released() { //viewing = true; 
+  }
+  void scroll(int scroll){
+    
+    if(src.width/src.height<= 1) zoom = constrain(zoom +0.05*scroll, 0.01, src.height/coords.size.y);  // src image = paysage
+    if(src.width/src.height > 1) zoom = constrain(zoom +0.05*scroll, 0.01, src.width/coords.size.x);  // src image = portrait
+
+    viewZone.size.x = coords.size.x*zoom ;
+    viewZone.size.y = coords.size.y*zoom ;
+    
+    synchroScroll = true ;
+  }
+
+  void renderView(){
+    updateView();
+    viewImg = render(viewImg, (viewZone.size.x > src.width ) ? int(src.width/zoom) : (int)coords.size.x );
+  }
+
+  // setup viewImg as the viewZone from src
+  void updateView(){
+    viewImg  = createImage( (int)viewZone.size.x, (int)viewZone.size.y, ALPHA );
+    viewImg.set(-(int)viewZone.pos.x, -(int)viewZone.pos.y, src );
   }
 
   void update(){
-    coords.size.x = srcMin.width;
-    coords.size.y = srcMin.height;
-    fill(bg); rect(gauche,haut,a,a);
-    image(srcMin, coords.pos.x, coords.pos.y);
-    styleSelecStroke(); if ( isOver() ) stroke(colorActive); strokeWeight(2.5);
-    rect(constrain( viewPos.x-viewSize*srcMin.width/w/2, coords.pos.x+1, coords.pos.x+srcMin.width-viewSize*srcMin.width/w -2), 
-         constrain( viewPos.y-viewSize*srcMin.width/w/2, coords.pos.y+1, coords.pos.y+srcMin.height-viewSize*srcMin.width/w -2), 
-        viewSize*srcMin.width/w, viewSize*srcMin.width/w
-    ); strokeWeight(1); noStroke();
+
+    // original image display
+    if(src.width/src.height <= 1) // src image = paysage
+      image(viewImg, coords.pos.x, coords.pos.y,
+          (viewZone.size.x > src.width ) ? src.width/zoom : coords.size.x ,
+          (viewZone.size.x > src.width ) ? coords.size.y : coords.size.y );
+    if(src.width/src.height > 1) // src image = portrait
+      image(viewImg, coords.pos.x, coords.pos.y,
+          (viewZone.size.x > src.height ) ? coords.size.y : coords.size.x ,
+          (viewZone.size.x > src.height ) ? src.height/zoom : coords.size.y );
+
+    // render renderZone
+    if( viewing ){    
+      viewing = false ;
+      // set renderZone size
+      if(lastRenderTime <0.09) { renderZone.size.x+=10 ;} else if (lastRenderTime >0.14) { renderZone.size.x-=10 ;};
+      if(lastRenderTime <0.09) { renderZone.size.y+=10 ;} else if (lastRenderTime >0.14) { renderZone.size.y-=10 ;};
+      renderZone.size.x = constrain( renderZone.size.x, 60, coords.size.x );
+      renderZone.size.y = constrain( renderZone.size.y, 60, coords.size.y );
+      
+      centerRectX = int( coords.size.x/2 - renderZone.size.x/zoom/2 ); // position centrer du render dans le veiwport
+      centerRectY = int( coords.size.y/2 - renderZone.size.y/zoom/2 );
+
+      srcMin = createImage( (int)renderZone.size.x, (int)renderZone.size.y, ALPHA );  
+      srcMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
+      srcMin = render(srcMin, floor(srcMin.width/zoom) );
+    }
+    
+    image(srcMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); 
+
+    if ( isOver() ) { cursor(CROSS); } else { cursor(ARROW); }
   }
 }
-
 
 class Snap extends GuiElement {
   PImage snap, tmp1, tmp2;
@@ -199,20 +257,19 @@ class Snap extends GuiElement {
     update();
   }
   void pressed (){
-    if(snap==null && currentI!=null) {  // save snap
+    if(snap==null && gui.elements.get(0).viewImg !=null) {  // save snap
       savedParams.loadParameters( params );
 
-      snap = currentI.get(); 
+      snap = gui.elements.get(0).viewImg.get(); 
       tmp1 = snap.get();
-      tmp1.resize( srcMin.width/2, srcMin.height/2 );
-      tmp2 = snap.get( snap.width/2, snap.height/2, srcMin.width/2, srcMin.height/2 );
+      tmp1.resize( 100, 100 );
+      tmp2 = snap.get( snap.width/2, snap.height/2, 100, 100 );
       fill(C[25]); drawRect(coords);
     }
     if (snap!=null) {  // load snap
       params.loadParameters( savedParams );
+      gui.elements.get(0).viewImg = snap;
       gui.update();
-      currentI = snap;
-      image(currentI, 3*a+35+d, d ); // draw view
     }      
     viewing = true ;
     // TODO : delete snap function
@@ -298,8 +355,6 @@ class BiSlider extends GuiElement {
   }  
 }
 
-
-
 class DiSlider extends GuiElement { 
   Rect handle[] = new Rect[2];
   float pos1, pos2, pos3, pos11, pos22, pos33, zone ; 
@@ -323,22 +378,24 @@ class DiSlider extends GuiElement {
     zone = 0; 
   }
   void dragged () {
-    float b5 = coords.size.x-params.b[1]; float w5 = coords.size.x-params.w[1];
-    off = (control) ? 20 : 1 ;
-    if ( zone==1 || zone==3 ) { // top black
-      params.b[0] += (mouseX-pos1)/off;    pos1=mouseX; 
-      params.b[1] -= (mouseY-pos11)/off;   pos11=mouseY; 
-      params.b[0] = constrain(params.b[0], 0, coords.size.x-20);
-      params.b[1] = constrain(params.b[1], 0, coords.size.x-20);
+    if ( zone!=0 ) {
+      float b5 = coords.size.x-params.b[1]; float w5 = coords.size.x-params.w[1];
+      off = (control) ? 20 : 1 ;
+      if ( zone==1 || zone==3 ) { // top black
+        params.b[0] += (mouseX-pos1)/off;    pos1=mouseX; 
+        params.b[1] -= (mouseY-pos11)/off;   pos11=mouseY; 
+        params.b[0] = constrain(params.b[0], 0, coords.size.x-20);
+        params.b[1] = constrain(params.b[1], 0, coords.size.x-20);
+      }
+      if ( zone==2 || zone==3 ) { // bottom white
+        params.w[0] += (mouseX-pos2)/off;  pos2=mouseX; 
+        params.w[1] -= (mouseY-pos22)/off; pos22=mouseY; 
+        params.w[0] = constrain(params.w[0], 0, coords.size.x-20);
+        params.w[1] = constrain(params.w[1], 0, coords.size.x-20);
+      }
+      update();
+      viewing = true ;
     }
-    if ( zone==2 || zone==3 ) { // bottom white
-      params.w[0] += (mouseX-pos2)/off;  pos2=mouseX; 
-      params.w[1] -= (mouseY-pos22)/off; pos22=mouseY; 
-      params.w[0] = constrain(params.w[0], 0, coords.size.x-20);
-      params.w[1] = constrain(params.w[1], 0, coords.size.x-20);
-    }
-    if ( zone!=0 ) update();
-    viewing = true ;
   }
 
   void update () {
