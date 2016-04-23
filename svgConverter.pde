@@ -23,13 +23,14 @@ BufferedImage result;
 
 
 void svgConverter( PImage input, float scale, String filePath ){
+    PoTraceJ poTraceJ = new PoTraceJ(param);
+    path_t trace = null;
 
     bmp = new Bitmap( input.width, input.height );
     for(int y=0; y<input.height; y++) {
         for(int x=0; x<input.width; x++) {
-            color c = input.get(x, y);
-            
-            if (brightness(c) < 100) {
+
+            if ( brightness( input.get(x, y) ) < params.o[1] ) {
                 bmp.put(x, y, 255 );
             } else {
                 bmp.put(x, y, 0 );
@@ -37,11 +38,8 @@ void svgConverter( PImage input, float scale, String filePath ){
         }
     } 
 
-    PoTraceJ poTraceJ = new PoTraceJ(param);
-    path_t trace = null;
 
     trace = poTraceJ.trace(bmp);
- Thread.yield();
 
     ArrayList<PathElement> al = new ArrayList<PathElement>();
     ConvertToJavaCurves.convert(trace, new HashSet<ConvertToJavaCurves.Point>(), al);

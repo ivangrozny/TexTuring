@@ -22,25 +22,20 @@ class GuiElement {
     return coords.isOver(mouseX, mouseY);
   }
 
-  void update() {  }
+  void update() {}
   //callbacks for injecting events
   void mouved() { update(); }
-  void pressed() {  }
-  void released() {  }
-  void dragged() {  }
+  void pressed() {}
+  void released() {}
+  void dragged() {}
   //helpers to uniformize ways of drawings things
-  void drawRect( Rect r) {
-     rect(r.pos.x, r.pos.y,r.size.x,r.size.y); 
-  }
-  void drawImage(PImage i, Rect r) {
-     image(i, r.pos.x, r.pos.y,r.size.x,r.size.y); 
-  }
-  void drawText( Rect r, String text) {
-     text(text, coords.pos.x + 5, coords.pos.y);
-  }
+  void drawRect( Rect r) {             rect(   r.pos.x, r.pos.y, r.size.x, r.size.y ); }
+  void drawImage(PImage i, Rect r) {  image(i, r.pos.x, r.pos.y, r.size.x, r.size.y ); }
+  void drawText( Rect r, String text){ text(text, coords.pos.x + 5, coords.pos.y ); }
   PImage viewImg;
   void renderView() {}
   void scroll(int scroll) {}
+  void resize() {}
 }
 
 
@@ -111,10 +106,10 @@ class CheckBox extends GuiElement {
     update();
   }
   void update(){
-    fill( isOver() ? C[12] : C[17] ); 
+    fill( C[20] ); 
     drawRect(coords);
-    fill( b ? C[0] : C[10] ); 
-    rect(coords.pos.x+3, coords.pos.y+3, coords.size.x-6, coords.size.y-6);
+    fill( b ? C[14] : C[5] ); if(isOver()) fill(colorActive);
+    rect(coords.pos.x+5, coords.pos.y+5, coords.size.x-10, coords.size.y-10);
   }
   void pressed() {
     buttonPressed( this );
@@ -151,26 +146,27 @@ class Slider extends GuiElement {
   void update(){
     //float b = params.o[ref]*w/range;
     float b = map( params.o[ref], 0,range, 0,coords.size.x ) ;
-    Vector2 s = new Vector2(coords.size);
 
-    fill( isOver() ? C[12] : C[17] ); 
+    fill( C[20] ); 
     drawRect(coords);
     pushMatrix(); translate(coords.pos.x, coords.pos.y);
-        fill(C[15]); rect(0, 3, b, s.y-6); // Slider
+        fill( isOver() ? C[12] : C[17] ); if(press) fill(colorActive); 
+        rect(0, 0, b, coords.size.y); // Slider
         fill(colorFont); 
-        text(name, 0 , -10);
-        text((int)b, b, s.y-3-4);  // number display
+        text(name, 0 , -8);
+        float textPos = b < coords.size.x-30 ? b+5 : b-25 ;
+        text((int)b, textPos, coords.size.y-5);  // number display
     popMatrix();
   }  
 }
 
-class ViewPort extends GuiElement { 
+class ViewPort extends GuiElement {
   Rect viewZone ;
   Rect renderZone ;
   PImage srcMin ;
   PImage viewImg ;
   float zoom = 1 ;
-  int centerRectX, centerRectY ;
+  float centerRectX, centerRectY, centerSize ;
   ViewPort (Rect _coords) { 
     super(_coords, "preview");
     viewZone   = new Rect(0,0,coords.size.x, coords.size.y); // from top left of input src
@@ -178,109 +174,119 @@ class ViewPort extends GuiElement {
     srcMin  = createImage(100, 100, ALPHA);
     viewImg = createImage(int(coords.size.x), int(coords.size.y), ALPHA);
   }
+  void resize(){
+    coords = new Rect( width/2, b+35, width/2 -2*b, height -3*b-35 );
+    scroll(0);
 
-  void dragged() {
-    synchroScroll = false ;
-    if ( isOver() ) {
-      viewZone.pos.x = constrain( viewZone.pos.x+pmouseX-mouseX, 0, (src.width -viewZone.size.x > 0) ? src.width -viewZone.size.x : 0 ) ;
-      viewZone.pos.y = constrain( viewZone.pos.y+pmouseY-mouseY, 0, (src.height-viewZone.size.y > 0) ? src.height-viewZone.size.y : 0 ) ;
-      updateView();
-      
-      viewing = true ;
-    }
-  }
-  void released() { //viewing = true; 
   }
   void scroll(int scroll){
-    
-    if(src.width/src.height<= 1) zoom = constrain(zoom +0.05*scroll, 0.01, src.height/coords.size.y);  // src image = paysage
-    if(src.width/src.height > 1) zoom = constrain(zoom +0.05*scroll, 0.01, src.width/coords.size.x);  // src image = portrait
-
+    if( src.width/src.height < 1) zoom = constrain(zoom +0.05*scroll, 0.1, src.height/coords.size.y);  // src image = portrait
+    if( src.width/src.height >= 1) zoom = constrain(zoom +0.05*scroll, 0.1, src.width/coords.size.x);  // src image = paysage
     viewZone.size.x = coords.size.x*zoom ;
     viewZone.size.y = coords.size.y*zoom ;
-    
+
     synchroScroll = true ;
+  }
+  void dragged() {
+    if ( isOver() || synchroScroll ) {
+      synchroScroll = false ;
+      viewZone.pos.x = constrain( viewZone.pos.x+pmouseX-mouseX, 0, (src.width -viewZone.size.x > 0) ? src.width -viewZone.size.x : 0 ) ;
+      viewZone.pos.y = constrain( viewZone.pos.y+pmouseY-mouseY, 0, (src.height-viewZone.size.y > 0) ? src.height-viewZone.size.y : 0 ) ;
+      
+      updateView();
+      viewing = true ;
+    }
   }
 
   void renderView(){
     updateView();
     viewImg = render(viewImg, (viewZone.size.x > src.width ) ? int(src.width/zoom) : (int)coords.size.x );
+    update();
+    viewing = false ;
   }
-
-  // setup viewImg as the viewZone from src
-  void updateView(){
-    viewImg  = createImage( (int)viewZone.size.x, (int)viewZone.size.y, ALPHA );
+  
+  void updateView(){ // setup viewImg as the viewZone from src
+    viewImg = createImage( (int)viewZone.size.x, (int)viewZone.size.y, ALPHA );
     viewImg.set(-(int)viewZone.pos.x, -(int)viewZone.pos.y, src );
   }
 
   void update(){
-
-    // original image display
-    if(src.width/src.height <= 1) // src image = paysage
-      image(viewImg, coords.pos.x, coords.pos.y,
-          (viewZone.size.x > src.width ) ? src.width/zoom : coords.size.x ,
-          (viewZone.size.x > src.width ) ? coords.size.y : coords.size.y );
-    if(src.width/src.height > 1) // src image = portrait
-      image(viewImg, coords.pos.x, coords.pos.y,
-          (viewZone.size.x > src.height ) ? coords.size.y : coords.size.x ,
-          (viewZone.size.x > src.height ) ? src.height/zoom : coords.size.y );
+    fill(bg); drawRect(coords); // background
+    image(viewImg, coords.pos.x, coords.pos.y, coords.size.x, coords.size.y ); // original image display
 
     // render renderZone
     if( viewing ){    
       viewing = false ;
       // set renderZone size
-      if(lastRenderTime <0.09) { renderZone.size.x+=10 ;} else if (lastRenderTime >0.14) { renderZone.size.x-=10 ;};
-      if(lastRenderTime <0.09) { renderZone.size.y+=10 ;} else if (lastRenderTime >0.14) { renderZone.size.y-=10 ;};
-      renderZone.size.x = constrain( renderZone.size.x, 60, coords.size.x );
-      renderZone.size.y = constrain( renderZone.size.y, 60, coords.size.y );
+      if(lastRenderTime <0.05) { centerSize+=10 ;} else if (lastRenderTime >0.08) { centerSize-=10 ;};
+      centerSize = constrain( centerSize, 60, coords.size.x*zoom );
+      // set the renderZone position
+      centerRectX = ( coords.size.x - centerSize/zoom )/2 ;
+      centerRectY = ( coords.size.y - centerSize/zoom )/2 ;
       
-      centerRectX = int( coords.size.x/2 - renderZone.size.x/zoom/2 ); // position centrer du render dans le veiwport
-      centerRectY = int( coords.size.y/2 - renderZone.size.y/zoom/2 );
-
-      srcMin = createImage( (int)renderZone.size.x, (int)renderZone.size.y, ALPHA );  
+      srcMin = createImage( int(centerSize), int(centerSize), ALPHA );  
       srcMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
-      srcMin = render(srcMin, floor(srcMin.width/zoom) );
+      srcMin = render(srcMin, int( centerSize/zoom ) );
     }
+    image(srcMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); // render image display
     
-    image(srcMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); 
-
     if ( isOver() ) { cursor(CROSS); } else { cursor(ARROW); }
   }
 }
 
 class Snap extends GuiElement {
-  PImage snap, tmp1, tmp2;
+  PImage snap;
   Parameters savedParams = new Parameters();
+  Rect delete;
+  PImage delImg;
 
   Snap (Rect _coords, String _name) { 
     super(_coords, _name);
+    delete = new Rect(coords.pos.x, coords.pos.y, 20, 20);
+    delImg = loadImage("delete.png");
     update();
+
+  }
+  void resize(){
+    color(bg); drawRect(coords);
+    coords.pos.y = height -d -coords.size.y ;
+    delete = new Rect(coords.pos.x, coords.pos.y, 20, 20);
+  println(coords.size.x+" - "+ coords.size.y);
   }
   void pressed (){
-    if(snap==null && gui.elements.get(0).viewImg !=null) {  // save snap
+
+    if( snap == null ) {  // save snap
       savedParams.loadParameters( params );
 
-      snap = gui.elements.get(0).viewImg.get(); 
-      tmp1 = snap.get();
-      tmp1.resize( 100, 100 );
-      tmp2 = snap.get( snap.width/2, snap.height/2, 100, 100 );
+      snap = loadImage("gradVertical.png");
+      snap.resize(100,100);
+      snap = render(snap,100);
+
       fill(C[25]); drawRect(coords);
+      update();
     }
-    if (snap!=null) {  // load snap
-      params.loadParameters( savedParams );
-      gui.elements.get(0).viewImg = snap;
-      gui.update();
+
+    if ( snap!=null  ) {  
+      if ( delete.isOver() ) { snap = null ; } 
+      else { // load snap
+        params.loadParameters( savedParams );
+        gui.update();
+      }
     }      
     viewing = true ;
-    // TODO : delete snap function
   }
   void update(){
-    if(snap==null){
+    if ( snap == null ) {
       fill( isOver() ? C[12] : C[17] ); 
       drawRect(coords);
-    }else{
-      PImage off = isOver() ? tmp2 : tmp1 ; 
-      image(off, coords.pos.x, coords.pos.y);
+    } else {
+      if ( !isOver() ) tint( C[17] );  image(snap, coords.pos.x, coords.pos.y);
+      if ( !isOver() ) noTint();  
+      if ( isOver() ) {
+        fill( delete.isOver() ? C[12] : C[17] );
+        drawRect(delete);
+        image(delImg,coords.pos.x, coords.pos.y);
+      }
     }
   }
 }
@@ -341,13 +347,13 @@ class BiSlider extends GuiElement {
     fill(handle[2].isOver() ? C[18] : C[20] ); drawRect(handle[2]); // bg bde
     fill(C[15]); if (handle[0].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[0]); // top cursor box
     fill(C[15]); if (handle[1].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[1]); // bottom
-    pushMatrix(); translate(coords.pos.x, coords.pos.y); 
+    pushMatrix(); translate(coords.pos.x, coords.pos.y);
         fontColor(); text(name, 0 , -10); textAlign(CENTER);
         fill(0); triangle(b-18, sh-3, b+18, sh-3, b, sh+3); // top
         fill(255); triangle(w-18, 2*sh+3, w+18, 2*sh+3, w, 2*sh-3); // bottom
         fontColor(); 
-        text(nfs(b,0,1), b, sh-3-4);
-        text(nfs(w,0,1), w, 3*sh-4);
+        text(int(b), b, sh-3-4);
+        text(int(w), w, 3*sh-4);
           fill(C[15]);
         if(b<w) image(gradInvert, b, sh+3, w-b, sh-6);  
         if(b>=w)image(grad,       w, sh+3, b-w, sh-6); 

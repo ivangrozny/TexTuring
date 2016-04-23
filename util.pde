@@ -56,3 +56,13 @@ boolean isOver (float x, float y, float w, float h) {
   else { return false ; }
 }
 
+boolean validImageFile(File file){
+  boolean isValid = false ;
+  String fileName = file.getName().toLowerCase();
+  String[] ext = { ".gif", ".jpg", ".tga", ".png" };
+  for (String o : ext) {
+    if ( fileName.endsWith(o) ) 
+      isValid = true;
+  }
+  return isValid ;
+}

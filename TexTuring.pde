@@ -14,10 +14,19 @@ File lastDirectory = null;
 
 GuiWindow gui ;
 Parameters params ;
+int listenerWidth, listenerHeight;
+
+void settings() {
+//  size( int(displayWidth*0.8), int(displayHeight*0.8), P2D );
+}
 
 void setup() {
-  size(1350, 720); //size(displayWidth, displayHeight);
-  frameRate(20);
+  size( 1000, 800, FX2D );
+  listenerHeight=height; listenerWidth=width;
+  surface.setResizable(true);
+  surface.setSize ( int(displayWidth*0.8), int(displayHeight*0.8) );
+  surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
+  frameRate(25);
   gui = new GuiWindow();
   params = new Parameters();
   gui.setupGui();
@@ -26,15 +35,21 @@ void setup() {
   params.loadFile( new File(dataPath("default.texturing")) );
   
   //frame.setIconImage( getToolkit().getImage("icone.ico") ); 
-  //if (frame != null) { frame.setResizable(true) ;}
 }
 
 void draw() {
- if ( viewing )       gui.elements.get(0).update() ;
- if ( synchroScroll ) gui.elements.get(0).dragged();
+  if ( viewing )       gui.elements.get(0).update() ;
+  if ( synchroScroll ) gui.elements.get(0).dragged();
 
- if (pmouseX!=mouseX || pmouseY!=mouseY) gui.injectMouseMoved  ();
- if ((pmouseX!=mouseX || pmouseY!=mouseY) && mousePressed) gui.injectMouseDragged ();
+  if ( pmouseX!=mouseX || pmouseY!=mouseY) gui.injectMouseMoved  ();
+  if ((pmouseX!=mouseX || pmouseY!=mouseY) && mousePressed) gui.injectMouseDragged ();
+
+
+  if (listenerWidth!=width || listenerHeight!=height) { 
+    listenerWidth=width; listenerHeight=height; 
+    gui.resize(); 
+    gui.update();
+  } // resize listener
 }
 
 void mousePressed (){ gui.injectMousePressed (); }
@@ -43,15 +58,20 @@ void mouseWheel(processing.event.MouseEvent event) { gui.injectMouseWheel(event.
 
 PImage render(PImage imageIn, int widthOut ){
   PImage image = imageIn.get();
-  int imgWidth = (int)params.o[2]*image.width/100; if (imgWidth<5) imgWidth = 5;
-  image.resize(imgWidth, 0 );
+  int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
+
+  //image.resize(imgWidth, 0 );
+  BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), imgWidth);  // load PImage to bufferImage
+  image = new PImage(scaledImg);
+
   turing2(image);
   
   //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
-  BufferedImage scaledImg = Scalr.resize( (BufferedImage) image.getNative(), widthOut);  // load PImage to bufferImage
+  scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, widthOut);  // load PImage to bufferImage
   image = new PImage(scaledImg);
 
   if (threshold) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+
   return image ;
 }
 
@@ -75,34 +95,74 @@ void exportImage() {
 
   int result = JOptionPane.showConfirmDialog(null, outer, "Select export options", JOptionPane.OK_CANCEL_OPTION);
   if (result == JOptionPane.OK_OPTION) {
-    println( pathField.getCurrentDirectory()  );
 
     lastDirectory = pathField.getCurrentDirectory();
     String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() + extField.getSelectedItem() ;  
     println("path: "+ path );
 
-    // (kevin) open a new thread to start render when options pop ?
     switch ( extField.getSelectedItem()+"" ) {
-      case ".png" : 
-      //image(render(src, int(sizeField.getText()) ),0,0);
-      render(src, int(sizeField.getText()) ).save( path ); 
-      break;
-      case ".svg" : svgConverter( render(src, int(sizeField.getText()) ), 1, path ); break;  
-    }
 
+      case ".png" : 
+      if( gui.state == "multiFiles" ){
+        for ( int i=0; i < gui.listOfFiles.size(); i++ ) {
+          src = loadImage( gui.listOfFiles.get(i).getAbsolutePath() );
+          saveImage( render(src, int(sizeField.getText()) ), 
+            pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() ); 
+        }
+      } else {
+        saveImage( render(src, int(sizeField.getText()) ) , path ); 
+      }
+      break;
+      case ".gif" :
+
+      break;
+      case ".svg" : svgConverter( render(src, int(params.o[2]*src.width/100)*2 ), 1, path ); break;  
+    }
   }
+}
+void saveImage ( PImage img, String path ) {
+
+  PGraphics pg = null ;
+  pg = createGraphics(img.width, img.height); 
+  
+  pg.beginDraw();
+  pg.image(img,0,0);
+  pg.endDraw();
+  pg.get().save( path );
 }
 
 void fileSelected(File selection) { 
-  lastPath = selection.getAbsolutePath(); 
-  PImage tmp = loadImage(lastPath);
-  tmp.filter(GRAY);
-  src = createImage(tmp.width, tmp.height, ALPHA);
-  src.copy(tmp,0,0,src.width, src.height,0,0,src.width, src.height);
-  w = src.width;
-  h = src.height;
-  gui.update();
-  viewing = true ; 
+  if (selection !=null) {
+    lastPath = selection.getAbsolutePath(); 
+    PImage tmp = loadImage(lastPath);
+    tmp.filter(GRAY);
+    src = createImage(tmp.width, tmp.height, ALPHA);
+    src.copy(tmp,0,0,src.width, src.height,0,0,src.width, src.height);
+    w = src.width;
+    h = src.height;
+    gui.update();
+    gui.elements.get(0).scroll(-1); 
+    mousePressed = false ;
+    viewing = true ;
+  } 
+}
+void folderSelected(File selection) {
+  if ( selection !=null ) {
+
+    File viewFile = null;
+    File[] files = selection.listFiles();
+
+    for ( File file : files ) {
+      if ( file.isFile() && validImageFile( file ) ) {
+        gui.listOfFiles.add( file );
+        viewFile = file;
+      }
+    }
+    if ( viewFile !=null ){
+      fileSelected( viewFile );
+      gui.state = "multiFiles";
+    }
+  }
 }
 
 void saveSpecimen(File selection){ 

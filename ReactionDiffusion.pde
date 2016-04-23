@@ -1,7 +1,6 @@
-//////////////////////////////////////////////// reaction - diffusion /////////////// TURING
-//////////////////////////////////////////////// reaction - diffusion /////////////// TURING
+//////////////////////////////////////////////// reaction - diffusion ///////////////
 
-PImage turing2(PImage img) {
+PImage turing2 (PImage img) {
 surface.setTitle ("TexTuring - computing ..." );  
 float time = millis();
 int left, right, up, down, W = img.width, H = img.height;  float uvv, u, v;
@@ -51,6 +50,7 @@ float lapU, lapV;
     }
   }
 
+println( params.o[0] );
 
   for (int n = 0; n< params.o[0] ; ++n){ 
     for (int i = 0; i < W; ++i) {
@@ -92,7 +92,7 @@ float lapU, lapV;
       }
     }
   img.updatePixels();
-  //console.setText("").setColor(colorFont);
+
   lastRenderTime = ( millis()-time ) /1000 ; 
   surface.setTitle ( "TexTuring - " + lastRenderTime + " sec");
   return img;
