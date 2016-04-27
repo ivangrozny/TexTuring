@@ -8,12 +8,14 @@ class GuiElement {
   GuiElement(){
     coords = new Rect();
   }
+
   GuiElement(Rect _coords, String _name){
     coords = _coords;
     name = _name;
     if (name=="iterations") ref = 0 ;
     if (name=="threshold") ref = 1 ;
     if (name=="resolution") ref = 2 ;
+    
     if (name=="reaction") ref = 2 ;
     if (name=="diffusion") ref = 3 ;
   }
@@ -36,8 +38,8 @@ class GuiElement {
   void renderView() {}
   void scroll(int scroll) {}
   void resize() {}
+  void message(String msg) {}
 }
-
 
 class Menu extends GuiElement {
 
@@ -118,6 +120,25 @@ class CheckBox extends GuiElement {
 }
 
 
+class StatusBar extends GuiElement {
+  String txt = "init";
+  StatusBar(Rect _coords, String _name) { 
+    super(_coords, _name);
+    update();
+  }
+  void update(){
+    fill( C[20] ); 
+    drawRect(coords);
+    fill(colorFont); 
+    text(txt, coords.pos.x + 5, coords.pos.y + 15);
+  }
+  void message(String msg){
+    txt = msg ;
+    update();
+  }
+}
+
+
 class Slider extends GuiElement {
   int range; 
   boolean press = false;
@@ -163,8 +184,9 @@ class Slider extends GuiElement {
 class ViewPort extends GuiElement {
   Rect viewZone ;
   Rect renderZone ;
-  PImage srcMin ;
   PImage viewImg ;
+  PImage srcMin ;
+  PImage renderMin = createImage(100,100,ALPHA);
   float zoom = 1 ;
   float centerRectX, centerRectY, centerSize ;
   ViewPort (Rect _coords) { 
@@ -200,8 +222,10 @@ class ViewPort extends GuiElement {
 
   void renderView(){
     updateView();
-    viewImg = render(viewImg, (viewZone.size.x > src.width ) ? int(src.width/zoom) : (int)coords.size.x );
-    update();
+    viewImg = render(viewImg, (int)coords.size.x );
+
+    image(viewImg, coords.pos.x, coords.pos.y ); // display rendered image
+
     viewing = false ;
   }
   
@@ -212,13 +236,14 @@ class ViewPort extends GuiElement {
 
   void update(){
     fill(bg); drawRect(coords); // background
-    image(viewImg, coords.pos.x, coords.pos.y, coords.size.x, coords.size.y ); // original image display
+    image(viewImg, coords.pos.x, coords.pos.y, coords.size.x, coords.size.y ); // display original image 
 
     // render renderZone
     if( viewing ){    
       viewing = false ;
       // set renderZone size
-      if(lastRenderTime <0.05) { centerSize+=10 ;} else if (lastRenderTime >0.08) { centerSize-=10 ;};
+      if(lastRenderTime <0.05) { centerSize+=2 ;} else if (lastRenderTime >0.08) { centerSize-=2 ;};
+      if(lastRenderTime <0.03) { centerSize+=10 ;} else if (lastRenderTime >0.1) { centerSize-=10 ;};
       centerSize = constrain( centerSize, 60, coords.size.x*zoom );
       // set the renderZone position
       centerRectX = ( coords.size.x - centerSize/zoom )/2 ;
@@ -226,9 +251,22 @@ class ViewPort extends GuiElement {
       
       srcMin = createImage( int(centerSize), int(centerSize), ALPHA );  
       srcMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
-      srcMin = render(srcMin, int( centerSize/zoom ) );
+
+/*        if ( myThread.isActive() ) 
+          myThread.quit();
+
+        myThread = new MyThread();
+        myThread.sizeOut = int( centerSize/zoom ) ;
+        myThread.srcMin = srcMin ;
+        myThread.start(); 
+*/
+        renderMin = render(srcMin, int( centerSize/zoom ) );
+    
     }
-    image(srcMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); // render image display
+    
+    if (myThread.getImg()!=null) renderMin = myThread.getImg();
+
+    image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); // render image display
     
     if ( isOver() ) { cursor(CROSS); } else { cursor(ARROW); }
   }
@@ -251,7 +289,6 @@ class Snap extends GuiElement {
     color(bg); drawRect(coords);
     coords.pos.y = height -d -coords.size.y ;
     delete = new Rect(coords.pos.x, coords.pos.y, 20, 20);
-  println(coords.size.x+" - "+ coords.size.y);
   }
   void pressed (){
 
@@ -343,7 +380,7 @@ class BiSlider extends GuiElement {
     handle[0] = new Rect( coords.pos.x+b-18, coords.pos.y+0,  36, sh-3 );
     handle[1] = new Rect( coords.pos.x+w-18, coords.pos.y+2*sh+3, 36, sh-3 );
     handle[2] = new Rect( coords.pos.x, coords.pos.y+sh+3, coords.size.x-10, sh-6 );
-    fill(colorElemBg); rect(coords.pos.x-18,coords.pos.y,coords.size.x+26,3*sh);  //bg
+    fill(bg); rect(coords.pos.x-18,coords.pos.y,coords.size.x+26,3*sh);  //bg
     fill(handle[2].isOver() ? C[18] : C[20] ); drawRect(handle[2]); // bg bde
     fill(C[15]); if (handle[0].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[0]); // top cursor box
     fill(C[15]); if (handle[1].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[1]); // bottom
@@ -364,13 +401,14 @@ class BiSlider extends GuiElement {
 class DiSlider extends GuiElement { 
   Rect handle[] = new Rect[2];
   float pos1, pos2, pos3, pos11, pos22, pos33, zone ; 
-  PImage mapImg = createImage(100, 100, ARGB); 
+  PImage mapImg ; 
   PImage grad, gradInvert;
   String name2;
 
   DiSlider(Rect _coords, String _name, String _name2){ 
     super(_coords, _name);
     name2 = _name2;
+    mapImg = createImage(int(10), int(10), ARGB);
     grad = loadImage("gradient.png"); gradInvert = loadImage("gradInvert.png");
     updateDiSliderImage = true;
     update();
@@ -405,61 +443,68 @@ class DiSlider extends GuiElement {
   }
 
   void update () {
+    float x=coords.pos.x, y=coords.pos.y, s=coords.size.x, sh=coords.size.y ;
+
+    handle[0] = new Rect( x+params.b[0]-10, y+map(params.b[1],0,s,s,0)-10, 20, 20 );
+    handle[1] = new Rect( x+  params.w[0]-10, y+map(  params.w[1],0,s,s,0)-10, 20, 20 );
+
+    float b5 = s-params.b[1]; float w5 = s-params.w[1];  // invert 0->200 to 200->0
+    
     if ( updateDiSliderImage ) {
+      mapImg.resize(100,100) ;
       turing2(mapImg); 
+      BufferedImage scaledImg = Scalr.resize( (BufferedImage)mapImg.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, int(s-20) );  // load PImage to bufferImage 
+      mapImg = new PImage(scaledImg);
+      if (threshold) mapImg.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+
       updateDiSliderImage = false;
     }
 
-    float x=coords.pos.x, y=coords.pos.y, s=coords.size.x, sh=coords.size.y ;
-    
-    handle[0] = new Rect( x+params.b[0]-10, y+map(params.b[1],0,s,s,0)-10, 20, 20 );
-    handle[1] = new Rect( x+  params.w[0]-10, y+map(  params.w[1],0,s,s,0)-10, 20, 20 );
-    float b5 = s-params.b[1]; float w5 = s-params.w[1];  // invert 0->200 to 200->0
-
     pushMatrix(); translate(x, y);
-      fill(C[25]); rect(-36,s,50,50 ); //bg cleaner //// utile?
-      fill(colorElemBg); rect(-20,0,s+40,s+40 ); //bg
+      fill(bg); rect(-20,0,s+40,s+40 ); //bg
+      fontColor(); text("growing bay", 0 , 0); 
       image(mapImg, 0,20,s-20,s-20);
+      fill(240,180); rect(0,20,s-20,s-20);
       strokeWeight(5);
-        stroke(C[12]); if (handle[0].isOver() && coords.isOver()) stroke(colorActive); ellipse(params.b[0], b5, 15, 15);  // top
-        stroke(C[12]); if (handle[1].isOver() && coords.isOver()) stroke(colorActive); ellipse(params.w[0], w5, 15, 15);  // bottom
+        stroke(C[12]); if (handle[0].isOver() || coords.isOver() && !handle[1].isOver() ) stroke(colorActive); ellipse(params.b[0], b5, 15, 15);  // top
+        stroke(C[12]); if (handle[1].isOver() || coords.isOver() && !handle[0].isOver() ) stroke(colorActive); ellipse(params.w[0], w5, 15, 15);  // bottom
       strokeWeight(1); noStroke();
       for (int i = 0; i<=20; i++){
         fill(255/20*i);
         ellipse(params.b[0]+i*(params.w[0]-params.b[0])/20, b5+i*(w5-b5)/20, 10,10);
       }
     popMatrix();
-    setupSlider(0, name, x, y+s+10, s-10);
-    setupSlider(1, name2, x+s-10, y+s, s-10);
+    updateSlider(0, name, x, y+s+10, s-10);
+    updateSlider(1, name2, x+s-10, y+s, s-10);
   } 
-  void setupSlider(int ref, String name, float xx, float yy, float s){ 
-    int sh=15;
+  void updateSlider(int ref, String name, float xx, float yy, float s){ 
+    int sh=10 ;
     float b = params.b[ref]; float w = params.w[ref];
     pushMatrix(); translate(xx, yy); 
     if(ref==1)rotate(-PI/2);
-    fontColor(); text(name, 0 , 50); 
-    fill(C[18]); rect(0,0,s-10,sh-6); // bg bde
+    fill(C[22]); rect(0,0,s-10,sh-6); // slider rect
     if ( abs(b-w)<36 ) {
       float mid = (b<w) ? b+(w-b)/2 : w+(b-w)/2 ;
-      if (b<w) { fill(0); triangle(mid, sh, mid-36, sh, b, sh-6); fill(255); triangle(mid, sh, mid+36, sh, w, sh-6); }
-      if (b>=w) {fill(0); triangle(mid, sh, mid+36, sh, b, sh-6); fill(255); triangle(mid, sh, mid-36, sh, w, sh-6); }
+      if (b<w) { fill(0); triangle(mid, 12, mid-36, 12, b, sh-6); fill(255); triangle(mid, 12, mid+36, 12, w, sh-6); }
+      if (b>=w) {fill(0); triangle(mid, 12, mid+36, 12, b, sh-6); fill(255); triangle(mid, 12, mid-36, 12, w, sh-6); }
         fill(C[18]);
-      rect(mid, sh, -36,sh); rect(mid, sh, 36,sh); // cursor box
+        rect(mid, 12, -36,15);
+        rect(mid, 12,  36,15); // handle rect
 
         fontColor(); textAlign(CENTER); 
-      if(b<w){ text(nfs(b,0,1), mid-18, 2*sh-4); text(nfs(w,0,1), mid+18, 2*sh-4);
-      } else {     text(nfs(b,0,1), mid+18, 2*sh-4); text(nfs(w,0,1), mid-18, 2*sh-4); }
+      if(b<w){ text(nfs(b,0,1), mid-18, 2*sh+3); text(nfs(w,0,1), mid+18, 2*sh+3);
+      } else { text(nfs(b,0,1), mid+18, 2*sh+3); text(nfs(w,0,1), mid-18, 2*sh+3); }
       if(b<w) image (gradInvert, b, 0, w-b, sh-6);  
       if(b>=w)image (grad,       w, 0, b-w, sh-6); 
     } else {
-      fill (0);   triangle ( b-18, sh, b+18, sh, b, sh-6); // top
-      fill (255); triangle ( w-18, sh, w+18, sh, w, sh-6); // bottom
+      fill (0);   triangle ( b-18, 12, b+18, 12, b, sh-6); // top
+      fill (255); triangle ( w-18, 12, w+18, 12, w, sh-6); // bottom
         fill(C[18]);
-      rect ( b-18, sh, 36,sh ); // cursor box
-      rect ( w-18, sh, 36,sh );
+      rect ( b-18, 12, 36, 15 ); // handle rect
+      rect ( w-18, 12, 36, 15 );
         fontColor(); textAlign(CENTER);
-      text ( nfs(b,0,1), b, 2*sh-4);
-      text ( nfs(w,0,1), w, 2*sh-4);
+      text ( nfs(b,0,1), b, 23);
+      text ( nfs(w,0,1), w, 23);
       if(b<w) image(gradInvert, b, 0, w-b, sh-6);  
       if(b>=w)image(grad,       w, 0, b-w, sh-6);        
     }

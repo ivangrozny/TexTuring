@@ -16,6 +16,8 @@ GuiWindow gui ;
 Parameters params ;
 int listenerWidth, listenerHeight;
 
+MyThread myThread;
+
 void settings() {
 //  size( int(displayWidth*0.8), int(displayHeight*0.8), P2D );
 }
@@ -27,8 +29,10 @@ void setup() {
   surface.setSize ( int(displayWidth*0.8), int(displayHeight*0.8) );
   surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
   frameRate(25);
-  gui = new GuiWindow();
+
+  myThread = new MyThread();
   params = new Parameters();
+  gui = new GuiWindow();
   gui.setupGui();
   fileSelected( new File(dataPath("wiki.png")) );                        // file selected at TexTuring launch
   //selectInput("Select a file to process:", "fileSelected");            // file selector at TexTuring launch
@@ -41,15 +45,14 @@ void draw() {
   if ( viewing )       gui.elements.get(0).update() ;
   if ( synchroScroll ) gui.elements.get(0).dragged();
 
-  if ( pmouseX!=mouseX || pmouseY!=mouseY) gui.injectMouseMoved  ();
-  if ((pmouseX!=mouseX || pmouseY!=mouseY) && mousePressed) gui.injectMouseDragged ();
+  if ( pmouseX!=mouseX || pmouseY!=mouseY)                  gui.injectMouseMoved  (); // mousMoved listener
+  if ((pmouseX!=mouseX || pmouseY!=mouseY) && mousePressed) gui.injectMouseDragged (); // mousDragged listener
 
-
-  if (listenerWidth!=width || listenerHeight!=height) { 
+  if (listenerWidth!=width || listenerHeight!=height) {  // resize listener
     listenerWidth=width; listenerHeight=height; 
     gui.resize(); 
     gui.update();
-  } // resize listener
+  }
 }
 
 void mousePressed (){ gui.injectMousePressed (); }
@@ -60,20 +63,23 @@ PImage render(PImage imageIn, int widthOut ){
   PImage image = imageIn.get();
   int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
 
-  //image.resize(imgWidth, 0 );
-  BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), imgWidth);  // load PImage to bufferImage
-  image = new PImage(scaledImg);
+  image.resize(imgWidth, 0 );
+
 
   turing2(image);
   
+
   //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
-  scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, widthOut);  // load PImage to bufferImage
+  BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);  // load PImage to bufferImage 
   image = new PImage(scaledImg);
 
   if (threshold) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
 
   return image ;
 }
+
+
+
 
 void exportImage() {
   JTextField nameField = new JTextField(12); nameField.setText( "export-"+int(random(9999)) );
@@ -124,11 +130,11 @@ void saveImage ( PImage img, String path ) {
 
   PGraphics pg = null ;
   pg = createGraphics(img.width, img.height); 
-  
   pg.beginDraw();
   pg.image(img,0,0);
   pg.endDraw();
   pg.get().save( path );
+  gui.message("image file saved");
 }
 
 void fileSelected(File selection) { 
@@ -161,6 +167,7 @@ void folderSelected(File selection) {
     if ( viewFile !=null ){
       fileSelected( viewFile );
       gui.state = "multiFiles";
+      gui.message(gui.listOfFiles.size()+" files will processed");
     }
   }
 }
@@ -193,10 +200,9 @@ void saveVideo(){
 void keyPressed(){
   if ( keyCode == CONTROL) control = true;
   if (key == 'i') src.filter(INVERT);
-  if (key == '+') src.resize(int(src.width+100),0);  if (key == '-') src.resize(int(src.width-100),0);
+  
 //  if (key == 'v') { for (int i = 0; i<8; i++){ videoCtrl[0][i]=Slider[i];  videoCtrl[1][i]=wb[i];  saved[i]=Slider[i]+" "+wb[i] ; }              saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-V.trm", saved); }
 //  if (key == 'b') { for (int i = 0; i<8; i++){ videoCtrl[2][i]=Slider[i];  videoCtrl[3][i]=wb[i];  saved[i]=Slider[i]+" "+wb[i] ; } saveVideo(); saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-B.trm", saved); }
-  if (key == 'a') {  selectFolder("Select a folder to process:", "folderSelected");  } 
 }
 
 void keyReleased()  { 

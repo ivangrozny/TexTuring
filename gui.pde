@@ -10,23 +10,26 @@ class GuiWindow {
   void setupGui(){  
     try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) { e.printStackTrace(); }  //  platform specific UI
     for (int i = 0; i<=25; i++){ colorMode(HSB); C[i] = color(122,270-i*13,100+i*5); } // create UI color shades
-    background(C[25]); noStroke();
+    background( bg );
+    noStroke();
     PFont font = loadFont("PixelOperator-16.vlw"); textFont(font, 16);
 
     Rect guiRect = new Rect(d, d, 95, 22 );
 
                           elements.add(new Menu  (new Rect(guiRect), new String[]{ "open", "image file", "images folder" } ));
-    guiRect.pos.x += 100; elements.add(new Button(new Rect(guiRect), "export"));
-    guiRect.pos.x += 150; elements.add(new Button(new Rect(guiRect), "load"));
-    guiRect.pos.x += 100; elements.add(new Button(new Rect(guiRect), "save"));
+    guiRect.pos.x += 100; elements.add(new Button(new Rect(guiRect), "export ..."));
     guiRect.pos.x += 100; elements.add(new Button(new Rect(guiRect), "specimen"));
+    guiRect.pos.x += 150; elements.add(new Menu  (new Rect(guiRect), new String[]{ "seeding mode", "noise", "regular", "monochrome" } ));
+    guiRect.pos.x += 150; elements.add(new Menu  (new Rect(guiRect), new String[]{ "file settings", "load", "save" } ));
+    guiRect.pos.x += 130; elements.add(1,new StatusBar(new Rect(guiRect), "status"));
+    
+                          elements.add(0,new ViewPort(new Rect( width/2, b+35, width/2 -2*b, height -3*b-35 )));
 
     guiRect.pos.x = int( width/2 ); elements.add(new Button(new Rect(guiRect) , "render"));
     guiRect.size.x = 22; guiRect.size.y = 22;
     guiRect.pos.x +=100; elements.add(new Button(new Rect(guiRect), " +"));
     guiRect.pos.x += 30; elements.add(new Button(new Rect(guiRect), " -"));
 
-    elements.add(0, new ViewPort(new Rect( width/2, b+35, width/2 -2*b, height -3*b-35 )));
 
     guiRect = new Rect( d, d, 300, 22);
     guiRect.pos.y += 80; elements.add(new   Slider(new Rect(guiRect), "iterations", 5000));  
@@ -54,13 +57,16 @@ class GuiWindow {
   void injectMousePressed()  { for (GuiElement elem : elements) { if ( elem.isOver() ) { elem.pressed(); return; } } }
   void injectMouseWheel(int scroll){for (GuiElement elem : elements) { if( elem.isOver() ) { elem.scroll(scroll); return; } } }
 
-  void update(){    
+  void update(){     
     updateDiSliderImage = true ;
     viewing = true ;
     for (GuiElement elem : elements) { elem.update(); } 
   }
   void resize(){
     for (GuiElement elem : elements) { elem.resize(); }  
+  }
+  void message(String msg){
+    elements.get(1).message(msg);
   }
 }
 
@@ -70,19 +76,22 @@ void saveFile( File _file ){ params.saveFile( _file ); }
 void buttonPressed( GuiElement _elem ){
     if ( _elem.name == "image file" ) { selectInput("Select a new image", "fileSelected"); viewing = true ; } 
     if ( _elem.name == "images folder" ) { selectFolder("Select a folder to process:", "folderSelected");} 
-    if ( _elem.name == "export" ) { exportImage(); }       
+    if ( _elem.name == "export ..." ) { exportImage(); }       
     if ( _elem.name == "load" ) {     selectInput( "Select TexTuring settings file", "loadFile"); viewing = true ; } 
     if ( _elem.name == "save" ) {     selectOutput("Name your TexTuring settings file", "saveFile"); } 
     if ( _elem.name == "specimen" ) {  }
     if ( _elem.name == "check threshold" ) { threshold = !threshold ; viewing=true; }
-    if ( _elem.name == "render" ) {  gui.elements.get(0).renderView(); }
+    if ( _elem.name == "render"){ gui.elements.get(0).renderView(); }
     if ( _elem.name == " +" ) {  gui.elements.get(0).scroll(-1); }
     if ( _elem.name == " -" ) {  gui.elements.get(0).scroll(1); }
+    
+    if ( _elem.name == "noise" ) {      params.iniState = 0; viewing=true; synchroScroll = true ; gui.update(); }
+    if ( _elem.name == "regular" ) {    params.iniState = 1; viewing=true; synchroScroll = true ; gui.update(); }
+    if ( _elem.name == "monochrome" ) { params.iniState = 2; viewing=true; synchroScroll = true ; gui.update(); }
 }
 
 color[] C = new color[26];
-color bg = #EDEDED;
-color colorElemBg = color(210);
+color bg = color(225);
 //color colorOver = color();
 color colorActive = #ff7f09; //#fc3011; //fc622a;
 color colorFont = #002645;
