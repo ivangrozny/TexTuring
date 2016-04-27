@@ -60,7 +60,7 @@ float lapU, lapV;
       }
     }
   }
-println(params.o[0] );
+
   for (int n = 0; n< params.o[0] ; ++n){ 
     for (int i = 0; i < W; ++i) {
       for (int j = 0; j < H; ++j) {
