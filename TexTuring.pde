@@ -53,7 +53,7 @@ void draw() {
     gui.resize(); 
     gui.update();
   }
-  println(width+" "+height);
+//  println(width+" "+height);
 }
 
 void mousePressed (){ gui.injectMousePressed (); }

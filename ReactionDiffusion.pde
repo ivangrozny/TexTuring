@@ -41,22 +41,22 @@ float lapU, lapV;
   float[][][] fkuv = new float[W][H][4];  // init param grid
   float[] mini = { 0.00, 0.01, 0.03, 0.005 };  // F, K, diffU, diffV
   float[] maxi = { 0.15, 0.08, 0.11, 0.05 };  // F, K, diffU, diffV
-  int[] controlSize = { a, a, a, a };
+
   for (int i = 0; i<W; i++){
     for (int j = 0; j<H; j++){
 
       for (int k = 0; k<4; k++){
         if ( updateMapImg == false ) {
           fkuv[i][j][k] = map( brightness(img.pixels[j*W+i]),0,255, 
-            map(params.b[k], 0, controlSize[k], mini[k], maxi[k]), 
-            map(params.w[k], 0, controlSize[k], mini[k], maxi[k]));
+            map(params.b[k], 0, 200, mini[k], maxi[k]), 
+            map(params.w[k], 0, 200, mini[k], maxi[k]));
         } 
       }
       if ( updateMapImg == true) {
         fkuv[i][j][0] = map( i, 0, H, mini[0], maxi[0] );
         fkuv[i][j][1] = map( j, 0, W, maxi[1], mini[0] );  
-        fkuv[i][j][2] = map(params.b[2],0,controlSize[2],0,maxi[2]);
-        fkuv[i][j][3] = map(params.w[3],0,controlSize[3],0,maxi[3]);
+        fkuv[i][j][2] = map(params.b[2],0,200,0,maxi[2]);
+        fkuv[i][j][3] = map(params.w[3],0,200,0,maxi[3]);
       }
     }
   }
