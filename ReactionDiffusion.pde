@@ -1,6 +1,6 @@
 //////////////////////////////////////////////// reaction - diffusion ///////////////
 
-PImage turing2 (PImage img) {
+PImage turing2 (PImage img, boolean updateMapImg) {
 surface.setTitle ("TexTuring - computing ..." );  
 float time = millis();
 int left, right, up, down, W = img.width, H = img.height;  float uvv, u, v;
@@ -39,20 +39,20 @@ float lapU, lapV;
   //diffU = 0.16; diffV = 0.08; F = 0.035;  K = 0.06;
 
   float[][][] fkuv = new float[W][H][4];  // init param grid
-  float[] maxi = { 0.18, 0.07, 0.13, 0.05 };  // F, K, diffU, diffV
-  float[] mini = { 0.00, 0.00, 0.03, 0.005 };  // F, K, diffU, diffV
+  float[] mini = { 0.00, 0.01, 0.03, 0.005 };  // F, K, diffU, diffV
+  float[] maxi = { 0.15, 0.08, 0.11, 0.05 };  // F, K, diffU, diffV
   int[] controlSize = { a, a, a, a };
   for (int i = 0; i<W; i++){
     for (int j = 0; j<H; j++){
 
       for (int k = 0; k<4; k++){
-        if ( updateDiSliderImage == false ) {
+        if ( updateMapImg == false ) {
           fkuv[i][j][k] = map( brightness(img.pixels[j*W+i]),0,255, 
             map(params.b[k], 0, controlSize[k], mini[k], maxi[k]), 
             map(params.w[k], 0, controlSize[k], mini[k], maxi[k]));
         } 
       }
-      if ( updateDiSliderImage == true) {
+      if ( updateMapImg == true) {
         fkuv[i][j][0] = map( i, 0, H, mini[0], maxi[0] );
         fkuv[i][j][1] = map( j, 0, W, maxi[1], mini[0] );  
         fkuv[i][j][2] = map(params.b[2],0,controlSize[2],0,maxi[2]);
@@ -94,11 +94,6 @@ float lapU, lapV;
         pShift = int( U[i][j]*255 ) ;
 
         img.pixels[j*W+i] = 0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
-
-/*        if( updateDiSliderImage )
-          if( pShift<params.o[1] ) { img.pixels[j*W+i] = color(190); } 
-                              else { img.pixels[j*W+i] = color(240); }*/
-
       }
     }
   img.updatePixels();

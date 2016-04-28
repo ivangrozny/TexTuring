@@ -86,7 +86,7 @@ class Button extends GuiElement {
   }
   void update(){
     if (isVisible){
-      fill( isOver() ? C[12] : C[17] ); 
+      fill( isOver() ? C[12] : C[18] ); 
       drawRect(coords);
       fill(colorFont); 
       text(name, coords.pos.x + 5, coords.pos.y + 15);
@@ -108,14 +108,16 @@ class CheckBox extends GuiElement {
     update();
   }
   void update(){
-    fill( C[20] ); 
+    fill( C[18] ); if(isOver()) fill(colorActive); 
     drawRect(coords);
-    fill( b ? C[14] : C[5] ); if(isOver()) fill(colorActive);
-    rect(coords.pos.x+5, coords.pos.y+5, coords.size.x-10, coords.size.y-10);
+    fill( b ? C[15] : C[5] ); 
+    rect(coords.pos.x+4, coords.pos.y+4, coords.size.x-8, coords.size.y-8);
   }
   void pressed() {
     buttonPressed( this );
     b = !b ;
+    updateDiSliderImage = true;
+    gui.injectMouseMoved();
   }
 }
 
@@ -127,7 +129,7 @@ class StatusBar extends GuiElement {
     update();
   }
   void update(){
-    fill( C[20] ); 
+    fill( C[22] ); 
     drawRect(coords);
     fill(colorFont); 
     text(txt, coords.pos.x + 5, coords.pos.y + 15);
@@ -142,10 +144,12 @@ class StatusBar extends GuiElement {
 class Slider extends GuiElement {
   int range; 
   boolean press = false;
-  
-  Slider(Rect _coords, String _name, int _range){ 
+  PImage sliderTimeBg = loadImage("slider.png");
+  String txt;
+  Slider(Rect _coords, String _name, String _txt, int _range){ 
     super(_coords, _name);
     range = _range;
+    txt = _txt;
     update();
   }
   void pressed (){
@@ -168,15 +172,16 @@ class Slider extends GuiElement {
     //float b = params.o[ref]*w/range;
     float b = map( params.o[ref], 0,range, 0,coords.size.x ) ;
 
-    fill( C[20] ); 
+    fill( C[19] ); 
     drawRect(coords);
     pushMatrix(); translate(coords.pos.x, coords.pos.y);
-        fill( isOver() ? C[12] : C[17] ); if(press) fill(colorActive); 
+        if (name=="iterations"||name=="resolution") image(sliderTimeBg, int(coords.size.x - sliderTimeBg.width), 0 );  // bg img
+        fill( isOver() ? C[11] : C[14] ); if(press) fill(colorActive); 
         rect(0, 0, b, coords.size.y); // Slider
         fill(colorFont); 
-        text(name, 0 , -8);
-        float textPos = b < coords.size.x-30 ? b+5 : b-25 ;
-        text((int)b, textPos, coords.size.y-5);  // number display
+        text(txt, 0 , -8);
+        float textPos = b < coords.size.x-30 ? b+5 : b-30 ;
+        text((int)params.o[ref], textPos, coords.size.y-6);  // number display
     popMatrix();
   }  
 }
@@ -280,24 +285,19 @@ class Snap extends GuiElement {
 
   Snap (Rect _coords, String _name) { 
     super(_coords, _name);
-    delete = new Rect(coords.pos.x, coords.pos.y, 20, 20);
+    delete = new Rect(coords.pos.x+b, coords.pos.y+b, 20, 20);
     delImg = loadImage("delete.png");
     update();
 
-  }
-  void resize(){
-    color(bg); drawRect(coords);
-    coords.pos.y = height -d -coords.size.y ;
-    delete = new Rect(coords.pos.x, coords.pos.y, 20, 20);
   }
   void pressed (){
 
     if( snap == null ) {  // save snap
       savedParams.loadParameters( params );
 
-      snap = loadImage("gradVertical.png");
-      snap.resize(100,100);
-      snap = render(snap,100);
+      snap = loadImage("gradient.png");
+      snap.resize((int)coords.size.x,(int)coords.size.y);
+      snap = render(snap,(int)coords.size.x);
 
       fill(C[25]); drawRect(coords);
       update();
@@ -314,15 +314,18 @@ class Snap extends GuiElement {
   }
   void update(){
     if ( snap == null ) {
-      fill( isOver() ? C[12] : C[17] ); 
+      fill( isOver() ? C[20] : C[22] ); 
       drawRect(coords);
     } else {
-      if ( !isOver() ) tint( C[17] );  image(snap, coords.pos.x, coords.pos.y);
-      if ( !isOver() ) noTint();  
-      if ( isOver() ) {
+      if ( !isOver() ) {
+        fill(230); drawRect(coords);
+        tint( 255, 60 );  
+        image(snap, coords.pos.x, coords.pos.y); noTint();  
+      } else {
+        image(snap, coords.pos.x, coords.pos.y);
         fill( delete.isOver() ? C[12] : C[17] );
         drawRect(delete);
-        image(delImg,coords.pos.x, coords.pos.y);
+        image(delImg,coords.pos.x+b, coords.pos.y+b);
       }
     }
   }
@@ -335,9 +338,10 @@ class BiSlider extends GuiElement {
   float pos1, pos2, pos3, zone; 
   Rect handle[] = new Rect[3];
   PImage grad, gradInvert;
-
-  BiSlider(Rect _coords, String _name){
+  String txt;
+  BiSlider(Rect _coords, String _name, String _txt){
     super(_coords, _name);
+    txt = _txt;
     grad = loadImage("gradient.png"); gradInvert = loadImage("gradInvert.png");
     update();
   }
@@ -348,7 +352,9 @@ class BiSlider extends GuiElement {
     if ( handle[2].isOver() ) { zone=3; pos3=mouseX; } // center
   }
   void released (){ 
-    if ( zone!=0 ) updateDiSliderImage = true ;
+    if ( zone!=0 ) {
+      updateDiSliderImage = true ;
+    }
     zone = 0;  
   }
   void dragged () {
@@ -381,17 +387,16 @@ class BiSlider extends GuiElement {
     handle[1] = new Rect( coords.pos.x+w-18, coords.pos.y+2*sh+3, 36, sh-3 );
     handle[2] = new Rect( coords.pos.x, coords.pos.y+sh+3, coords.size.x-10, sh-6 );
     fill(bg); rect(coords.pos.x-18,coords.pos.y,coords.size.x+26,3*sh);  //bg
-    fill(handle[2].isOver() ? C[18] : C[20] ); drawRect(handle[2]); // bg bde
-    fill(C[15]); if (handle[0].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[0]); // top cursor box
-    fill(C[15]); if (handle[1].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[1]); // bottom
+    fill(handle[2].isOver() ? C[17] : C[19] ); drawRect(handle[2]); // bg bde
+    fill(C[18]); if (handle[0].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[0]); // top cursor box
+    fill(C[18]); if (handle[1].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[1]); // bottom
     pushMatrix(); translate(coords.pos.x, coords.pos.y);
-        fontColor(); text(name, 0 , -10); textAlign(CENTER);
+        fontColor(); text(txt, 0 , 0); textAlign(CENTER);
         fill(0); triangle(b-18, sh-3, b+18, sh-3, b, sh+3); // top
         fill(255); triangle(w-18, 2*sh+3, w+18, 2*sh+3, w, 2*sh-3); // bottom
         fontColor(); 
         text(int(b), b, sh-3-4);
         text(int(w), w, 3*sh-4);
-          fill(C[15]);
         if(b<w) image(gradInvert, b, sh+3, w-b, sh-6);  
         if(b>=w)image(grad,       w, sh+3, b-w, sh-6); 
     popMatrix(); textAlign(LEFT);
@@ -403,11 +408,9 @@ class DiSlider extends GuiElement {
   float pos1, pos2, pos3, pos11, pos22, pos33, zone ; 
   PImage mapImg ; 
   PImage grad, gradInvert;
-  String name2;
 
-  DiSlider(Rect _coords, String _name, String _name2){ 
+  DiSlider(Rect _coords, String _name){ 
     super(_coords, _name);
-    name2 = _name2;
     mapImg = createImage(int(10), int(10), ARGB);
     grad = loadImage("gradient.png"); gradInvert = loadImage("gradInvert.png");
     updateDiSliderImage = true;
@@ -452,17 +455,16 @@ class DiSlider extends GuiElement {
     
     if ( updateDiSliderImage ) {
       mapImg.resize(100,100) ;
-      turing2(mapImg); 
+      mapImg = turing2(mapImg, true); 
+      updateDiSliderImage = false;
       BufferedImage scaledImg = Scalr.resize( (BufferedImage)mapImg.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, int(s-20) );  // load PImage to bufferImage 
       mapImg = new PImage(scaledImg);
       if (threshold) mapImg.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
-
-      updateDiSliderImage = false;
     }
 
     pushMatrix(); translate(x, y);
-      fill(bg); rect(-20,0,s+40,s+40 ); //bg
-      fontColor(); text("growing bay", 0 , 0); 
+      fill(bg); rect(-40,-20,s+60,s+60 ); //bg
+      fontColor(); text(name, -50 , 10); 
       image(mapImg, 0,20,s-20,s-20);
       fill(240,180); rect(0,20,s-20,s-20);
       strokeWeight(5);
@@ -474,10 +476,10 @@ class DiSlider extends GuiElement {
         ellipse(params.b[0]+i*(params.w[0]-params.b[0])/20, b5+i*(w5-b5)/20, 10,10);
       }
     popMatrix();
-    updateSlider(0, name, x, y+s+10, s-10);
-    updateSlider(1, name2, x+s-10, y+s, s-10);
+    updateSlider(0, x, y+s+5, s-10);
+    updateSlider(1, x+s-15, y+s, s-10);
   } 
-  void updateSlider(int ref, String name, float xx, float yy, float s){ 
+  void updateSlider(int ref, float xx, float yy, float s){ 
     int sh=10 ;
     float b = params.b[ref]; float w = params.w[ref];
     pushMatrix(); translate(xx, yy); 

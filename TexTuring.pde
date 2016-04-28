@@ -53,6 +53,7 @@ void draw() {
     gui.resize(); 
     gui.update();
   }
+  println(width+" "+height);
 }
 
 void mousePressed (){ gui.injectMousePressed (); }
@@ -66,7 +67,7 @@ PImage render(PImage imageIn, int widthOut ){
   image.resize(imgWidth, 0 );
 
 
-  turing2(image);
+  turing2(image, false);
   
 
   //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
@@ -200,7 +201,7 @@ void saveVideo(){
 void keyPressed(){
   if ( keyCode == CONTROL) control = true;
   if (key == 'i') src.filter(INVERT);
-  
+
 //  if (key == 'v') { for (int i = 0; i<8; i++){ videoCtrl[0][i]=Slider[i];  videoCtrl[1][i]=wb[i];  saved[i]=Slider[i]+" "+wb[i] ; }              saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-V.trm", saved); }
 //  if (key == 'b') { for (int i = 0; i<8; i++){ videoCtrl[2][i]=Slider[i];  videoCtrl[3][i]=wb[i];  saved[i]=Slider[i]+" "+wb[i] ; } saveVideo(); saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-B.trm", saved); }
 }
