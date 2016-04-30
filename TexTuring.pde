@@ -53,7 +53,6 @@ void draw() {
     gui.resize(); 
     gui.update();
   }
-//  println(width+" "+height);
 }
 
 void mousePressed (){ gui.injectMousePressed (); }
@@ -148,8 +147,7 @@ void fileSelected(File selection) {
     w = src.width;
     h = src.height;
     gui.update();
-    gui.elements.get(0).scroll(-1); 
-    mousePressed = false ;
+    gui.elements.get(0).scroll(-1);
     viewing = true ;
   } 
 }
@@ -168,7 +166,7 @@ void folderSelected(File selection) {
     if ( viewFile !=null ){
       fileSelected( viewFile );
       gui.state = "multiFiles";
-      gui.message(gui.listOfFiles.size()+" files will processed");
+      gui.message(gui.listOfFiles.size()+" images loaded");
     }
   }
 }

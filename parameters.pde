@@ -38,6 +38,7 @@ class Parameters {
     arrayCopy(other.b, b) ;
     arrayCopy(other.w, w) ;
     arrayCopy(other.o, o) ;
+    iniState = other.iniState ;
   }
 }
 

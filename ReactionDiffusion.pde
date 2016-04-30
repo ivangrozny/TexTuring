@@ -99,7 +99,7 @@ float lapU, lapV;
   img.updatePixels();
 
   lastRenderTime = ( millis()-time ) /1000 ; 
-  surface.setTitle ( "TexTuring - " + lastRenderTime + " sec");
+  //surface.setTitle ( "TexTuring - " + lastRenderTime + " sec");
 
 
   return img;

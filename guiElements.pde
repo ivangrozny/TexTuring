@@ -59,7 +59,7 @@ Rect zone;
     update();
   }
   void update(){ 
-    fill( isOver() ? C[14] : C[15] ); 
+    fill( isOver() ? C[14] : C[16] ); 
     drawRect(coords);
     fill(colorFont); 
     text(name, coords.pos.x + 5, coords.pos.y + 15);
@@ -98,6 +98,9 @@ class Button extends GuiElement {
   void pressed() {
     buttonPressed( this );
   }
+  void resize(){
+    if (name=="About") coords = new Rect( width-d-coords.size.x , coords.pos.y, coords.size.x, coords.size.y );
+  }
 }
 
 
@@ -129,14 +132,18 @@ class StatusBar extends GuiElement {
     update();
   }
   void update(){
-    fill( C[22] ); 
+    fill( 240 ); 
     drawRect(coords);
-    fill(colorFont); 
+    fill(C[10]); 
     text(txt, coords.pos.x + 5, coords.pos.y + 15);
   }
   void message(String msg){
+    println("msg: "+msg);
     txt = msg ;
     update();
+  }
+  void resize(){
+    coords = new Rect( coords.pos.x , coords.pos.y, width-coords.pos.x-50-d, coords.size.y );
   }
 }
 
@@ -192,6 +199,7 @@ class ViewPort extends GuiElement {
   PImage viewImg ;
   PImage srcMin ;
   PImage renderMin = createImage(100,100,ALPHA);
+  boolean isRender = false ;
   float zoom = 1 ;
   float centerRectX, centerRectY, centerSize ;
   ViewPort (Rect _coords) { 
@@ -202,7 +210,7 @@ class ViewPort extends GuiElement {
     viewImg = createImage(int(coords.size.x), int(coords.size.y), ALPHA);
   }
   void resize(){
-    coords = new Rect( width/2, b+35, width/2 -2*b, height -3*b-35 );
+    coords = new Rect( d+200+350+90 , b+35, width-200-350-90-d-d, height -3*b-35 );
     scroll(0);
 
   }
@@ -228,15 +236,18 @@ class ViewPort extends GuiElement {
   void renderView(){
     updateView();
     viewImg = render(viewImg, (int)coords.size.x );
+    gui.message("Last render in "+ lastRenderTime + " sec");
 
     image(viewImg, coords.pos.x, coords.pos.y ); // display rendered image
 
+    isRender = true ;
     viewing = false ;
   }
   
   void updateView(){ // setup viewImg as the viewZone from src
     viewImg = createImage( (int)viewZone.size.x, (int)viewZone.size.y, ALPHA );
     viewImg.set(-(int)viewZone.pos.x, -(int)viewZone.pos.y, src );
+    isRender = false ;
   }
 
   void update(){
@@ -246,10 +257,12 @@ class ViewPort extends GuiElement {
     // render renderZone
     if( viewing ){    
       viewing = false ;
+      if ( isRender ) updateView();
       // set renderZone size
-      if(lastRenderTime <0.05) { centerSize+=2 ;} else if (lastRenderTime >0.08) { centerSize-=2 ;};
-      if(lastRenderTime <0.03) { centerSize+=10 ;} else if (lastRenderTime >0.1) { centerSize-=10 ;};
-      centerSize = constrain( centerSize, 60, coords.size.x*zoom );
+      if(lastRenderTime <0.06) { centerSize+=2 ;} else if (lastRenderTime >0.09) { centerSize-=2 ;};
+      if(lastRenderTime <0.04) { centerSize+=10 ;} else if (lastRenderTime >0.11) { centerSize-=10 ;};
+      if (coords.size.x<coords.size.y) centerSize = constrain( centerSize, 60, coords.size.x*zoom );
+      if (coords.size.x>coords.size.y) centerSize = constrain( centerSize, 60, coords.size.y*zoom );
       // set the renderZone position
       centerRectX = ( coords.size.x - centerSize/zoom )/2 ;
       centerRectY = ( coords.size.y - centerSize/zoom )/2 ;
@@ -257,21 +270,18 @@ class ViewPort extends GuiElement {
       srcMin = createImage( int(centerSize), int(centerSize), ALPHA );  
       srcMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
 
-/*        if ( myThread.isActive() ) 
-          myThread.quit();
-
+/*      if ( myThread.isActive() ) myThread.quit();
         myThread = new MyThread();
-        myThread.sizeOut = int( centerSize/zoom ) ;
-        myThread.srcMin = srcMin ;
+        myThread.sizeOut = int( centerSize/zoom ) ; myThread.srcMin = srcMin ;
         myThread.start(); 
 */
-        renderMin = render(srcMin, int( centerSize/zoom ) );
-    
+      renderMin = render(srcMin, int( centerSize/zoom ) );
     }
     
-    if (myThread.getImg()!=null) renderMin = myThread.getImg();
+    //if (myThread.getImg()!=null) renderMin = myThread.getImg();
 
-    image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); // render image display
+    if ( !isRender )
+      image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); // render image display
     
     if ( isOver() ) { cursor(CROSS); } else { cursor(ARROW); }
   }
@@ -387,7 +397,7 @@ class BiSlider extends GuiElement {
     handle[1] = new Rect( coords.pos.x+w-18, coords.pos.y+2*sh+3, 36, sh-3 );
     handle[2] = new Rect( coords.pos.x, coords.pos.y+sh+3, coords.size.x-10, sh-6 );
     fill(bg); rect(coords.pos.x-18,coords.pos.y,coords.size.x+26,3*sh);  //bg
-    fill(handle[2].isOver() ? C[17] : C[19] ); drawRect(handle[2]); // bg bde
+    fill(handle[2].isOver() ? C[13] : C[16] ); drawRect(handle[2]); // bg bde
     fill(C[18]); if (handle[0].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[0]); // top cursor box
     fill(C[18]); if (handle[1].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[1]); // bottom
     pushMatrix(); translate(coords.pos.x, coords.pos.y);
