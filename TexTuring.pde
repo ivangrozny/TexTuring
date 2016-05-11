@@ -17,6 +17,8 @@ Parameters params ;
 int listenerWidth, listenerHeight;
 
 MyThread myThread;
+boolean isGpuEnable = true;
+
 
 void settings() {
 //  size( int(displayWidth*0.8), int(displayHeight*0.8), P2D );
@@ -65,10 +67,10 @@ PImage render(PImage imageIn, int widthOut ){
 
   image.resize(imgWidth, 0 );
 
+ 
 
   turing2(image, false);
   
-
   //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
   BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);  // load PImage to bufferImage 
   image = new PImage(scaledImg);
@@ -112,11 +114,12 @@ void exportImage() {
       if( gui.state == "multiFiles" ){
         for ( int i=0; i < gui.listOfFiles.size(); i++ ) {
           src = loadImage( gui.listOfFiles.get(i).getAbsolutePath() );
-          saveImage( render(src, int(sizeField.getText()) ), 
+          saveImage( renderGpu(src, int(sizeField.getText()) ), 
             pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() ); 
         }
       } else {
-        saveImage( render(src, int(sizeField.getText()) ) , path ); 
+        saveImage( renderGpu(src, int(sizeField.getText()) ) , path ); 
+        
       }
       break;
       case ".gif" :
@@ -207,4 +210,3 @@ void keyPressed(){
 void keyReleased()  { 
   control = false; 
 }
-

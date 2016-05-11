@@ -1,0 +1,97 @@
+Initialize engine version: 5.3.3f1 (910d71450a97)
+GfxDevice: creating device client; threaded=1
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.0]
+    Renderer: Radeon (TM) HD 8670M (ID=0x6660)
+    Vendor:   ATI
+    VRAM:     1014 MB
+Begin MonoManager ReloadAssembly
+Platform assembly: C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\UnityEngine.dll (this message is harmless)
+Loading C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\UnityEngine.dll into Unity Child Domain
+Platform assembly: C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\Assembly-CSharp.dll (this message is harmless)
+Loading C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\Assembly-CSharp.dll into Unity Child Domain
+Platform assembly: C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\UnityEngine.UI.dll (this message is harmless)
+Loading C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\UnityEngine.UI.dll into Unity Child Domain
+Platform assembly: C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\UnityEngine.Networking.dll (this message is harmless)
+Loading C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\UnityEngine.Networking.dll into Unity Child Domain
+- Completed reload, in  0.064 seconds
+Platform assembly: C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\System.Core.dll (this message is harmless)
+Platform assembly: C:\Data\Projects\Ivan\TexTuring\gpu\ReactDiffGpu_Data\Managed\System.dll (this message is harmless)
+<RI> Initializing input.
+<RI> Input initialized.
+desktop: 1366x768 60Hz; virtual: 1366x768 at 0,0
+<RI> Initialized touch support.
+UnloadTime: 0.646167 ms
+Start simulation of 1092 614
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+C:\Data\Projects\Ivan\TexTuring\\gpu\ReactDiffGpu.exe
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+C:\Data\Projects\Ivan\TexTuring\gpu\job.json
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+1092
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+614
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+Resize app to 1092 614
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+load job file:///C:\Data\Projects\Ivan\TexTuring\gpu\job.json
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+Start simulation of 1092 614
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+Setting up 1 worker threads for Enlighten.
+  Thread -> id: f00 -> priority: 1 
+JSON : {
+  "pathInput": "C:\\Data\\Projects\\Ivan\\TexTuring\\gpu\\input.png",
+  "pathOutput": "C:\\Data\\Projects\\Ivan\\TexTuring\\gpu\\output.png",
+  "simu": {
+    "maxV": 0.014449999667704105,
+    "maxU": 0.10999999940395355,
+    "maxFeed": 0.03450000286102295,
+    "iterations": 1340,
+    "maxKill": 0.06809999793767929,
+    "minU": 0.10999999940395355,
+    "mode": 0,
+    "Tech": 1,
+    "minFeed": 0.027000002562999725,
+    "minKill": 0.048500001430511475,
+    "minV": 0.014225000515580177,
+    "width": 0,
+    "height": 0
+  }
+}
+
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+load image 
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+Start with image of 416 499
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+Start simulation of 416 499
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+
+executed in 9.5557
+ 
+(Filename: C:/buildslave/unity/build/artifacts/generated/common/runtime/UnityEngineDebugBindings.gen.cpp Line: 37)
+

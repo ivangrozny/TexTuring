@@ -1,0 +1,19 @@
+{
+  "pathInput": "C:\\Data\\Projects\\Ivan\\TexTuring\\gpu\\input.png",
+  "pathOutput": "C:\\Data\\Projects\\Ivan\\TexTuring\\gpu\\output.png",
+  "simu": {
+    "maxV": 0.014449999667704105,
+    "maxU": 0.10999999940395355,
+    "maxFeed": 0.03450000286102295,
+    "iterations": 1340,
+    "maxKill": 0.06809999793767929,
+    "minU": 0.10999999940395355,
+    "mode": 0,
+    "Tech": 1,
+    "minFeed": 0.027000002562999725,
+    "minKill": 0.048500001430511475,
+    "minV": 0.014225000515580177,
+    "width": 0,
+    "height": 0
+  }
+}
