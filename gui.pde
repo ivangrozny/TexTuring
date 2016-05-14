@@ -71,12 +71,11 @@ guiRect.size.x = 113;
   void resize(){ for (GuiElement elem:elements) elem.resize(); }
   void message(String msg){ elements.get(1).message(msg); }
   void about(){ 
-    String txt = "TexTuring 1.0 :\nGeneral Public Licence - GNU GPL\n\n\n\nDithering tool based on natural patterns.\n\nTexTuring ease the use of reaction-diffusion model.\n\nProject initiated by Ivan Murit\n\nSpecial thanks to the crowd-founders for the initial support ! ";
-    fill(bg);
-    Rect coords = new Rect( gui.elements.get(0).coords ) ;
-    rect( coords.pos.x, coords.pos.y, coords.size.x, coords.size.y );
-    fill(colorFont);
-    text( txt, coords.pos.x+50, coords.pos.y+60, coords.size.x, int(coords.size.y/2)  );
+    JPanel aboutPane = new JPanel(new BorderLayout());
+    String txt = "<html><h2>TexTuring 1.0 :</h2>General Public Licence - GNU GPL<br><br>Dithering tool based on natural patterns.<br>TexTuring is a tool to ease the use of reaction-diffusion model.<br><br><br>Project initiated by <a href='http://www.ivan-murit.fr'>Ivan Murit</a><br>Special thanks to the crowd-founders for the initial support !<br><br></html>";
+    aboutPane.add(new JLabel(txt));
+    int aboutResult = JOptionPane.showConfirmDialog(null, aboutPane, "About", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
+
   }
 }
 

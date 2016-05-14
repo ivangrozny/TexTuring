@@ -19,7 +19,7 @@ int listenerWidth, listenerHeight;
 //MyThread myThread;
 
 void settings() {
-//  size( int(displayWidth*0.8), int(displayHeight*0.8), P2D );
+  size( int(displayWidth*0.8), int(displayHeight*0.8) );
 }
 
 void setup() {
@@ -79,7 +79,6 @@ PImage render(PImage imageIn, int widthOut ){
   return image ;
 }
 
-
 void exportImage() {
   String[] extention = { ".png", ".gif (animation)", ".svg (experimental)" };
   JTextField nameField = new JTextField(12); nameField.setText( "export-"+int(random(9999)) );
@@ -99,7 +98,7 @@ void exportImage() {
   outer.add(p1, BorderLayout.NORTH);
   outer.add(p2, BorderLayout.CENTER);
 
-  int result = JOptionPane.showConfirmDialog(null, outer, "Select export options", JOptionPane.OK_CANCEL_OPTION);
+  int result = JOptionPane.showConfirmDialog(null, outer, "Select export options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
   if (result == JOptionPane.OK_OPTION) {
 
     lastDirectory = pathField.getCurrentDirectory();
@@ -127,16 +126,16 @@ void exportImage() {
       JPanel p4 = new JPanel(); 
       JTextField nbrFrameField = new JTextField(4); nbrFrameField.setText( "10" );
       p3.add(nbrFrameField); 
-      p3.add(new JLabel(" frames from 'begining sample' to 'ending sample'"));
+      p3.add(new JLabel("<html> frames from <i>begining sample</i> to <i>ending sample</i></html>"));
       JTextField durationField = new JTextField(4); durationField.setText( "0.1" );
       p4.add(durationField);
-      p4.add(new JLabel(" seconds per frame "));
+      p4.add(new JLabel("<html> seconds per frame</html>"));
 
       JPanel outer2 = new JPanel(new BorderLayout());
       outer2.add(p3, BorderLayout.NORTH);
       outer2.add(p4, BorderLayout.SOUTH);
 
-      int result2 = JOptionPane.showConfirmDialog(null, outer2, "Select animation export options", JOptionPane.OK_CANCEL_OPTION);
+      int result2 = JOptionPane.showConfirmDialog(null, outer2, "Select animation export options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
       if (result2 == JOptionPane.OK_OPTION) {
 
         gifExport = new GifMaker(this, path + ".gif" );
