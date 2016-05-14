@@ -50,8 +50,10 @@ guiRect.size.x = 113;
     guiRect.pos.y += 68;  elements.add(new BiSlider(new Rect(guiRect), "diffusion", "Kill rate"));
 
     for (int i = 0; i<7; i++) {  
-      elements.add(new Snap( new Rect( d , d+100+ i*(80+b)  , 100, 80 ) , "snap" ));  
+      elements.add( i+2, new Snap( new Rect( d , d+100+ i*(80+b)  , 100, 80 ) , "snap" ));  
     }
+    elements.get(7).flag = "beginAnimation";
+    elements.get(8).flag = "endAnimation";
   }
 
   void injectMouseDragged()  { for (GuiElement elem : elements) { elem.dragged(); } }
@@ -63,7 +65,7 @@ guiRect.size.x = 113;
   void update(){     
     updateDiSliderImage = true ;
     viewing = true ;
-    for (GuiElement elem : elements) { elem.update(); }    fill(colorFont); text("Samples", d, d+100 -10 );
+    for (GuiElement elem : elements) { elem.update(); }  fill(colorFont); text("Samples", d, d+100 -10 );
 
   }
   void resize(){ for (GuiElement elem:elements) elem.resize(); }
@@ -104,8 +106,8 @@ void buttonPressed( GuiElement _elem ){
 color[] C = new color[26];
 color bg = color(225);
 //color colorOver = color();
-color colorActive = #ff8e09; // #ff7f09; //#fc3011; //fc622a;
-color colorFont = #002645;
+color colorActive = color(255, 142, 9);
+color colorFont = color(0, 38, 69);
 int a = 200, b = 5, c = 20, d = 10, haut = 60, gauche = 65;
 void styleSelecStroke(){ stroke(C[15]); noFill(); }
 void styleSelec(){ fill(C[15]); noStroke(); }

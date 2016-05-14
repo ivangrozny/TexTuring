@@ -16,7 +16,7 @@ GuiWindow gui ;
 Parameters params ;
 int listenerWidth, listenerHeight;
 
-MyThread myThread;
+//MyThread myThread;
 
 void settings() {
 //  size( int(displayWidth*0.8), int(displayHeight*0.8), P2D );
@@ -30,15 +30,15 @@ void setup() {
   surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
   frameRate(25);
 
-  myThread = new MyThread();
+  //myThread = new MyThread();
   params = new Parameters();
   gui = new GuiWindow();
   gui.setupGui();
-  fileSelected( new File(dataPath("wiki.png")) );                        // file selected at TexTuring launch
-  //selectInput("Select a file to process:", "fileSelected");            // file selector at TexTuring launch
+  fileSelected( new File(dataPath("wiki.jpg")) );                        // file selected at TexTuring launch
   params.loadFile( new File(dataPath("default.texturing")) );
   
-  //frame.setIconImage( getToolkit().getImage("icone.ico") ); 
+  PImage titlebaricon = loadImage("logo.png");
+  surface.setIcon(titlebaricon);
 }
 
 void draw() {
@@ -53,6 +53,7 @@ void draw() {
     gui.resize(); 
     gui.update();
   }
+    if (height<710) surface.setSize ( width, 710 );
 }
 
 void mousePressed (){ gui.injectMousePressed (); }
@@ -79,12 +80,11 @@ PImage render(PImage imageIn, int widthOut ){
 }
 
 
-
-
 void exportImage() {
+  String[] extention = { ".png", ".gif (animation)", ".svg (experimental)" };
   JTextField nameField = new JTextField(12); nameField.setText( "export-"+int(random(9999)) );
   JTextField sizeField = new JTextField(5); sizeField.setText( ""+(int) params.o[2]*src.width/100 );
-  JComboBox extField = new JComboBox( new DefaultComboBoxModel(new String[]{".png",".svg",".gif"}) );
+  JComboBox extField = new JComboBox( new DefaultComboBoxModel(extention) );
   JFileChooser pathField = new JFileChooser();
 
   if (lastDirectory != null) pathField.setCurrentDirectory( lastDirectory ); 
@@ -103,29 +103,67 @@ void exportImage() {
   if (result == JOptionPane.OK_OPTION) {
 
     lastDirectory = pathField.getCurrentDirectory();
-    String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() + extField.getSelectedItem() ;  
-    println("path: "+ path );
+    String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() ;  
+    println("savedPath: "+ path + "["+ extField.getSelectedItem() +"]" );
 
-    switch ( extField.getSelectedItem()+"" ) {
 
-      case ".png" : 
+    if ( extention[0].equals(extField.getSelectedItem()) ) { 
+
       if( gui.state == "multiFiles" ){
-        for ( int i=0; i < gui.listOfFiles.size(); i++ ) {
+        for ( int i=0; i < gui.listOfFiles.size(); ++i ) {
           src = loadImage( gui.listOfFiles.get(i).getAbsolutePath() );
           saveImage( render(src, int(sizeField.getText()) ), 
             pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() ); 
         }
       } else {
-        saveImage( render(src, int(sizeField.getText()) ) , path ); 
+        saveImage( render(src, int(sizeField.getText()) ) , path + ".png" ); 
       }
-      break;
-      case ".gif" :
+    }
 
-      break;
-      case ".svg" : svgConverter( render(src, int(params.o[2]*src.width/100)*2 ), 1, path ); break;  
+
+    if ( extention[1].equals(extField.getSelectedItem()) ) { 
+      // second message box to get gif export infos
+      JPanel p3 = new JPanel(); 
+      JPanel p4 = new JPanel(); 
+      JTextField nbrFrameField = new JTextField(4); nbrFrameField.setText( "10" );
+      p3.add(nbrFrameField); 
+      p3.add(new JLabel(" frames from 'begining sample' to 'ending sample'"));
+      JTextField durationField = new JTextField(4); durationField.setText( "0.1" );
+      p4.add(durationField);
+      p4.add(new JLabel(" seconds per frame "));
+
+      JPanel outer2 = new JPanel(new BorderLayout());
+      outer2.add(p3, BorderLayout.NORTH);
+      outer2.add(p4, BorderLayout.SOUTH);
+
+      int result2 = JOptionPane.showConfirmDialog(null, outer2, "Select animation export options", JOptionPane.OK_CANCEL_OPTION);
+      if (result2 == JOptionPane.OK_OPTION) {
+
+        gifExport = new GifMaker(this, path + ".gif" );
+        gifExport.setRepeat(0); // infinite
+        gifExport.setQuality(10); // default 10
+
+        params.loadParameters( gui.elements.get(7).savedParams );
+
+        // render every frames
+        for (int i=0; i < int(nbrFrameField.getText()); ++i) {
+          
+          gifExport.setDelay( int( float( durationField.getText() )*1000 ) ); // convert sec to ms 
+          gifExport.addFrame( render(src, int(sizeField.getText())) );
+          params.nextFrameAnimation( int( nbrFrameField.getText() ), gui.elements.get(8).savedParams );
+        }
+      
+        gifExport.finish();
+      }
+    }
+
+    if ( extention[2].equals(extField.getSelectedItem()) ) { 
+      svgConverter( render(src, int(params.o[2]*src.width/100)*2 ), 1, path + ".svg" );
     }
   }
 }
+
+
 void saveImage ( PImage img, String path ) {
 
   PGraphics pg = null ;
@@ -149,7 +187,10 @@ void fileSelected(File selection) {
     gui.update();
     gui.elements.get(0).scroll(-1);
     viewing = true ;
-  } 
+    params.o[2] = (int)map(w+h,1000,10000,200,20) ; // setup a proper dithering resolution
+    if (params.o[2]<5) params.o[2]=5;
+    if (params.o[2]>255) params.o[2]=255;
+  }
 }
 void folderSelected(File selection) {
   if ( selection !=null ) {
@@ -178,24 +219,6 @@ void saveSpecimen(File selection){
   //currentI.save(selection.getAbsolutePath()+".png"); 
 }
 
-float[][] videoCtrl = new float[4][8] ; // iniSlider, iniwb, finSlider, finwb
-int videoName = 0;
-int frames = 30;
-String instanceVideoFolder = ""+random(0, 1);
-ArrayList<File> filebst = new ArrayList<File>();
-
-void saveVideo(){
-/*  for (int i = 1; i<=frames; i++){ videoName++;
-    currentI = src.get();
-    for (int j = 0; j<8; j++){
-      Slider[j] = map(i,0,frames,videoCtrl[0][j],videoCtrl[2][j]);
-      wb  [j] = map(i,0,frames,videoCtrl[1][j],videoCtrl[3][j]);
-    }
-    turing2(currentI); 
-    image(currentI, 3*a+35+d, d );
-    currentI.save("video/animation_"+instanceVideoFolder+"/"+videoName+".png");
-  }*/
-}
 void keyPressed(){
   if ( keyCode == CONTROL) control = true;
   if (key == 'i') src.filter(INVERT);
@@ -207,4 +230,3 @@ void keyPressed(){
 void keyReleased()  { 
   control = false; 
 }
-

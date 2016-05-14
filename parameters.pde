@@ -40,7 +40,15 @@ class Parameters {
     arrayCopy(other.o, o) ;
     iniState = other.iniState ;
   }
+  void nextFrameAnimation( int fraction, Parameters out){
+    for (int i = 0; i<4; i++) { 
+      b[i] += ( out.b[i]-b[i] ) / fraction ; 
+      w[i] += ( out.w[i]-w[i] ) / fraction ; 
+    }
+    o[0] += int( ( out.o[0]-o[0] ) / fraction ) ;
+    o[1] += int( ( out.o[1]-o[1] ) / fraction ) ;
+    o[2] += int( ( out.o[2]-o[2] ) / fraction ) ;
+  }
 }
-
 
   

@@ -71,6 +71,7 @@ void svgConverter( PImage input, float scale, String filePath ){
                 case CURVE_TO:
                     path.curveTo(pathElement.getP0x(), pathElement.getP0y(), pathElement.getP1x(), pathElement.getP1y(), pathElement.getP2x(), pathElement.getP2y());
                     break;
+                default : break;    
             }
         }
         g2.setPaint(Color.black);
@@ -137,3 +138,8 @@ void svgConverter( PImage input, float scale, String filePath ){
         shape(s, 25, 25);
         endRecord();
 */
+
+
+import gifAnimation.*;
+
+GifMaker gifExport;

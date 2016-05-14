@@ -4,6 +4,8 @@ class GuiElement {
   int ref;
   boolean isOver = false;
   boolean isVisible = true;
+  Parameters savedParams ;
+  String flag = "";
 
   GuiElement(){
     coords = new Rect();
@@ -152,6 +154,7 @@ class Slider extends GuiElement {
   int range; 
   boolean press = false;
   PImage sliderTimeBg = loadImage("slider.png");
+  PImage sliderTimeBg2 = loadImage("slider2.png");
   String txt;
   Slider(Rect _coords, String _name, String _txt, int _range){ 
     super(_coords, _name);
@@ -282,19 +285,19 @@ class ViewPort extends GuiElement {
 
     if ( !isRender )
       image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); // render image display
-    
-    if ( isOver() ) { cursor(CROSS); } else { cursor(ARROW); }
+
+    if (isOver() && mousePressed) { cursor(MOVE); }else if(isOver()) { cursor(CROSS); }else{ cursor(ARROW); }
   }
 }
 
 class Snap extends GuiElement {
   PImage snap;
-  Parameters savedParams = new Parameters();
   Rect delete;
   PImage delImg;
 
   Snap (Rect _coords, String _name) { 
     super(_coords, _name);
+    savedParams = new Parameters();
     delete = new Rect(coords.pos.x+b, coords.pos.y+b, 20, 20);
     delImg = loadImage("delete.png");
     update();
@@ -326,6 +329,9 @@ class Snap extends GuiElement {
     if ( snap == null ) {
       fill( isOver() ? C[20] : C[22] ); 
       drawRect(coords);
+      fill( isOver()? C[10] : C[15] );
+      if (flag.equals("beginAnimation")) text("begin animation", coords.pos.x+4, coords.pos.y + coords.size.y-4 );
+      if (flag.equals("endAnimation"))   text("end animation",   coords.pos.x+4, coords.pos.y + coords.size.y-4 );
     } else {
       if ( !isOver() ) {
         fill(230); drawRect(coords);
@@ -337,6 +343,11 @@ class Snap extends GuiElement {
         drawRect(delete);
         image(delImg,coords.pos.x+b, coords.pos.y+b);
       }
+      fill( C[22] );
+      if (flag.equals("beginAnimation")||flag.equals("endAnimation")) rect( (int)coords.pos.x, (int)coords.pos.y + coords.size.y -15, (int)coords.size.x, 15 );
+      fill( isOver()? C[10] : C[15] );
+      if (flag.equals("beginAnimation")) text("begin animation", coords.pos.x+4, coords.pos.y + coords.size.y-4 );
+      if (flag.equals("endAnimation"))   text("end animation",   coords.pos.x+4, coords.pos.y + coords.size.y-4 );
     }
   }
 }

@@ -1,4 +1,4 @@
-
+/*
     class MyThread extends Thread {
       boolean active;
       PApplet p;
@@ -35,3 +35,4 @@
         interrupt();
       }
     }
+*/
