@@ -83,6 +83,13 @@ guiRect.size.x = 113;
 void loadFile( File _file ){ params.loadFile( _file ); }
 void saveFile( File _file ){ params.saveFile( _file ); }
 
+void keyPressed(){
+  if (key=='+')  gui.elements.get(0).scroll(-1); 
+  if (key=='-')  gui.elements.get(0).scroll(1); 
+  if (key==' ')  gui.elements.get(0).renderView();
+  if (key=='r')  gui.elements.get(0).renderView();
+  if ( keyCode == CONTROL) control = true;
+}
 
 void buttonPressed( GuiElement _elem ){
     if ( _elem.name == "Select file" ) { selectInput("Select a new image", "fileSelected"); viewing = true ; } 

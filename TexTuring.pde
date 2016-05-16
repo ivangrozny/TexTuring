@@ -1,8 +1,8 @@
-import processing.pdf.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.BorderLayout;
 import java.awt.image.BufferedImage;
+import processing.pdf.*;
 
 
 boolean control = false, live = true, updateDiSliderImage = false, viewing = false, threshold = true;
@@ -21,11 +21,10 @@ int listenerWidth, listenerHeight;
 //MyThread myThread;
 
 void settings() {
-  size( int(displayWidth*0.8), int(displayHeight*0.8), FX2D );
+  size( int(displayWidth*0.8), int(displayHeight*0.8) );
 }
 
 void setup() {
-  size(1000,500, FX2D);
   listenerHeight=height; listenerWidth=width;
   surface.setResizable(true);
   surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
@@ -237,14 +236,6 @@ void folderSelected(File selection) {
       gui.message(gui.listOfFiles.size()+" images loaded");
     }
   }
-}
-
-void keyPressed(){
-  if ( keyCode == CONTROL) control = true;
-  if (key == 'i') src.filter(INVERT);
-
-//  if (key == 'v') { for (int i = 0; i<8; i++){ videoCtrl[0][i]=Slider[i];  videoCtrl[1][i]=wb[i];  saved[i]=Slider[i]+" "+wb[i] ; }              saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-V.trm", saved); }
-//  if (key == 'b') { for (int i = 0; i<8; i++){ videoCtrl[2][i]=Slider[i];  videoCtrl[3][i]=wb[i];  saved[i]=Slider[i]+" "+wb[i] ; } saveVideo(); saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-B.trm", saved); }
 }
 
 void keyReleased()  { 
