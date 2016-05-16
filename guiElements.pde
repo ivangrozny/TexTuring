@@ -203,7 +203,7 @@ class ViewPort extends GuiElement {
   PImage srcMin ;
   PImage renderMin = createImage(100,100,ALPHA);
   boolean isRender = false ;
-  float zoom = 1 ;
+  float zoom = 0.5240786 ;
   float centerRectX, centerRectY, centerSize ;
   ViewPort (Rect _coords) { 
     super(_coords, "preview");
@@ -222,7 +222,6 @@ class ViewPort extends GuiElement {
     if( src.width/src.height >= 1) zoom = constrain(zoom +0.05*scroll, 0.1, src.width/coords.size.x);  // src image = paysage
     viewZone.size.x = coords.size.x*zoom ;
     viewZone.size.y = coords.size.y*zoom ;
-
     synchroScroll = true ;
   }
   void dragged() {
@@ -534,4 +533,3 @@ class DiSlider extends GuiElement {
     popMatrix(); textAlign(LEFT);
   } 
 }
-

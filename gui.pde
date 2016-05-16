@@ -30,7 +30,8 @@ guiRect.size.x = 113;
     guiRect.size.x = 22; guiRect.size.y = 22;
     guiRect.pos.x +=118; elements.add(new Button(new Rect(guiRect), " +"));
     guiRect.pos.x += 28; elements.add(new Button(new Rect(guiRect), " -"));
-    guiRect.pos.x += 30+5; elements.add(1,new StatusBar(new Rect(guiRect), "status"));
+    guiRect.pos.x += 30+5; 
+    guiRect.size.x=width-guiRect.pos.x-50-d; elements.add(1,new StatusBar(new Rect(guiRect), "status"));
     guiRect.size.x=45;
     guiRect.pos.x = width-d-45; elements.add(new Button(new Rect(guiRect), "About"));
 
@@ -72,7 +73,7 @@ guiRect.size.x = 113;
   void message(String msg){ elements.get(1).message(msg); }
   void about(){ 
     JPanel aboutPane = new JPanel(new BorderLayout());
-    String txt = "<html><h2>TexTuring 1.0 :</h2>General Public Licence - GNU GPL<br><br>Dithering tool based on natural patterns.<br>TexTuring is a tool to ease the use of reaction-diffusion model.<br><br><br>Project initiated by <a href='http://www.ivan-murit.fr'>Ivan Murit</a><br>Special thanks to the crowd-founders for the initial support !<br><br></html>";
+    String txt = "<html><h2>TexTuring 1.0</h2>General Public Licence - GNU GPL<br><br>Dithering tool based on natural patterns.<br>TexTuring is a tool to ease the use of reaction-diffusion model.<br><br><br>Project initiated by <a href='http://www.ivan-murit.fr'>Ivan Murit</a><br>Special thanks to the crowd-founders for the initial support !<br><br></html>";
     aboutPane.add(new JLabel(txt));
     int aboutResult = JOptionPane.showConfirmDialog(null, aboutPane, "About", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
 

@@ -1,7 +1,9 @@
+import processing.pdf.*;
 import javax.swing.*;
 import java.awt.event.*;
 import java.awt.BorderLayout;
 import java.awt.image.BufferedImage;
+
 
 boolean control = false, live = true, updateDiSliderImage = false, viewing = false, threshold = true;
 boolean synchroScroll = false;
@@ -19,14 +21,13 @@ int listenerWidth, listenerHeight;
 //MyThread myThread;
 
 void settings() {
-  size( int(displayWidth*0.8), int(displayHeight*0.8) );
+  size( int(displayWidth*0.8), int(displayHeight*0.8), FX2D );
 }
 
 void setup() {
-  size( 1000, 800, FX2D );
+  size(1000,500, FX2D);
   listenerHeight=height; listenerWidth=width;
   surface.setResizable(true);
-  surface.setSize ( int(displayWidth*0.8), int(displayHeight*0.8) );
   surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
   frameRate(25);
 
@@ -34,7 +35,7 @@ void setup() {
   params = new Parameters();
   gui = new GuiWindow();
   gui.setupGui();
-  fileSelected( new File(dataPath("wiki.jpg")) );                        // file selected at TexTuring launch
+  fileSelected( new File(dataPath("launch.jpg")) );                        // file selected at TexTuring launch
   params.loadFile( new File(dataPath("default.texturing")) );
   
   PImage titlebaricon = loadImage("logo.png");
@@ -60,6 +61,8 @@ void mousePressed (){ gui.injectMousePressed (); }
 void mouseReleased(){ gui.injectMouseReleased(); }
 void mouseWheel(processing.event.MouseEvent event) { gui.injectMouseWheel(event.getCount()); }
 
+
+
 PImage render(PImage imageIn, int widthOut ){
   PImage image = imageIn.get();
   int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
@@ -80,8 +83,8 @@ PImage render(PImage imageIn, int widthOut ){
 }
 
 void exportImage() {
-  String[] extention = { ".png", ".gif (animation)", ".svg (experimental)" };
-  JTextField nameField = new JTextField(12); nameField.setText( "export-"+int(random(9999)) );
+  String[] extention = { ".png", ".gif animation", ".pdf specimen", ".svg [experimental]" };
+  JTextField nameField = new JTextField(12); nameField.setText( "TexTuring-output_"+int(random(9999)) );
   JTextField sizeField = new JTextField(5); sizeField.setText( ""+(int) params.o[2]*src.width/100 );
   JComboBox extField = new JComboBox( new DefaultComboBoxModel(extention) );
   JFileChooser pathField = new JFileChooser();
@@ -130,7 +133,6 @@ void exportImage() {
       JTextField durationField = new JTextField(4); durationField.setText( "0.1" );
       p4.add(durationField);
       p4.add(new JLabel("<html> seconds per frame</html>"));
-
       JPanel outer2 = new JPanel(new BorderLayout());
       outer2.add(p3, BorderLayout.NORTH);
       outer2.add(p4, BorderLayout.SOUTH);
@@ -157,6 +159,32 @@ void exportImage() {
     }
 
     if ( extention[2].equals(extField.getSelectedItem()) ) { 
+      
+      PGraphics pdf = createGraphics(3000, 4243, PDF, path + ".pdf");
+      pdf.beginDraw();
+      pdf.background(255);
+      pdf.image(render(src, 3000), 0, 150);
+      pdf.fill(0);
+      pdf.textSize(36);
+      
+      pdf.text("TexTuring 1.0",20,40);
+      pdf.text(nameField.getText(),120,40);
+
+      pdf.text("Growing Time : " + params.o[0],500,40);
+      pdf.text("Threshold : "    + params.o[1],500,80);
+      pdf.text("Size : "         + params.o[2],500,120);
+      
+      String[] label = { "Bay X","Bay Y","Feed","Kill" };
+      for (int i = 0; i < 4; ++i) {
+        pdf.text(label[i]                  ,1000+i*500,40);
+        pdf.text( "Black : " + params.b[i] ,1000+i*500,80);
+        pdf.text( "White : " + params.w[i] ,1000+i*500,120);
+      }
+
+      pdf.dispose();
+      pdf.endDraw();
+    }
+    if ( extention[3].equals(extField.getSelectedItem()) ) { 
       svgConverter( render(src, int(params.o[2]*src.width/100)*2 ), 1, path + ".svg" );
     }
   }
@@ -186,7 +214,7 @@ void fileSelected(File selection) {
     gui.update();
     gui.elements.get(0).scroll(-1);
     viewing = true ;
-    params.o[2] = (int)map(w+h,1000,10000,200,20) ; // setup a proper dithering resolution
+    params.o[2] = (int)map(w+h,1000,10000,150,20) ; // setup a proper dithering resolution
     if (params.o[2]<5) params.o[2]=5;
     if (params.o[2]>255) params.o[2]=255;
   }
@@ -209,13 +237,6 @@ void folderSelected(File selection) {
       gui.message(gui.listOfFiles.size()+" images loaded");
     }
   }
-}
-
-void saveSpecimen(File selection){ 
-  //for (int i = 0; i<8; i++){ saved[i] = Slider[i]+" "+wb[i] ; } 
-  //saveStrings( selection.getAbsolutePath()+".trm", saved) ;
-  //render(); 
-  //currentI.save(selection.getAbsolutePath()+".png"); 
 }
 
 void keyPressed(){
