@@ -1,398 +1,243 @@
-int frames = 30;
-float[] slider = {0 ,40 ,20 ,0 ,20 ,20 ,20 ,20}; float[] knob = {60 ,0 ,0 ,0 ,0 ,0 ,0 ,0};
-Button[] button ; BiSlider[] bi ; DiSlider di ; MonoSlider mono; Snap snaps ; CheckBox checkbox; MapImg mapImg;
-PFont font;
-boolean control = false, live = true, map = false, viewing = false, seuilVisible=true, greyScale = true;
-String[] saved ; 
+import javax.swing.*;
+import java.awt.event.*;
+import java.awt.BorderLayout;
+import java.awt.image.BufferedImage;
+import processing.pdf.*;
+
+
+boolean control = false, live = true, updateDiSliderImage = false, viewing = false, threshold = true;
+boolean synchroScroll = false;
+PImage src ;
+int h,w, off, offX, offY, viewSize=100 ;
+float lastRenderTime;
+
 String lastPath ;
-PImage src, view, currentI, srcMin, grad,gradInvert;
-int viewX, viewY,h,w, off, offX, offY, viewSize=100 ;
-color[] C = new color[26];
+File lastDirectory = null;
+
+GuiWindow gui ;
+Parameters params ;
+int listenerWidth, listenerHeight;
+
+//MyThread myThread;
+
+void settings() {
+  size( int(displayWidth*0.8), int(displayHeight*0.8) );
+}
 
 void setup() {
-  size(1350, 720); //frame.setIconImage( getToolkit().getImage("icone.ico") ); //size(displayWidth, displayHeight);
-  //if (frame != null) { frame.setResizable(true) ;}
-  frameRate(60);
-  for (int i = 0; i<=25; i++){ colorMode(HSB); C[i] = color(122,270-i*13,100+i*5); } // create UI color shades
-  background(C[25]); noStroke();
-  src=loadImage("wiki.png");
-  grad=loadImage("gradient.png"); gradInvert=loadImage("gradInvert.png");
-  font = loadFont("FedraTwelve-Normal-12.vlw");  textFont(font, 12); fontColor();
+  listenerHeight=height; listenerWidth=width;
+  surface.setResizable(true);
+  surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
+  frameRate(25);
 
-  button = new Button[6];
-  // TODO button loop
-  button[0] = new Button(d    , d, 100+5, 20 ,"new file");
-  button[1] = new Button(d+110, d, 100+5, 20 ,"export");
-  button[2] = new Button(d+220, d, 100+5, 20 ,"load");
-  button[3] = new Button(d+330, d, 95,    20 ,"save");
-  button[4] = new Button(d+430, d, a/2-b, 20 ,"specimen");
-  button[5] = new Button(d+a+a+a/2+30, d, a/2-b, 20,"render");
+  //myThread = new MyThread();
+  params = new Parameters();
+  gui = new GuiWindow();
+  gui.setupGui();
+  fileSelected( new File(dataPath("launch.jpg")) );                        // file selected at TexTuring launch
+  params.loadFile( new File(dataPath("default.texturing")) );
   
-  if(seuilVisible) text("threshold", gauche+20, haut+a+c+55); 
-
-  // TODO (GUI) inclure un switch pour un export en greyScale
-
-  mapImg = new MapImg(gauche, haut);
-  snaps = new Snap( d,  height-d-a/2 );
-  
-  mono = new MonoSlider(0, "iterations", gauche,  haut+a+c+15, a+20, 2000);  
-  bi = new BiSlider[2]; 
-  bi[0] = new BiSlider(6, "reaction", gauche-10, haut+a+c+150, a+20);
-  bi[1] = new BiSlider(7, "diffusion", gauche-10, haut+a+c+a+a/2-60, a+20);
-  di = new DiSlider(gauche+a+80+b, haut+a+c+10, a+20);
-
-  saved = loadStrings("default.trm");
-  setParam(saved);
-  di.setup();
-
-  //selectInput("Select a file to process:", "fileSelected"); noLoop();  // File selector at TexTuring-launch
-  File file = new File( dataPath("wiki.png") ); fileSelected(file);      // File selected at TexTuring-launch
+  PImage titlebaricon = loadImage("logo.png");
+  surface.setIcon(titlebaricon);
 }
 
 void draw() {
-  //if (frameCount%1==0) viewSize = (int)map(slider[0],0,1000,a,50);//int(frameRate*20) ;
-  if (viewing && srcMin!=null) preview() ;
-}
-void preview(){
-  //fill(C[25]); rect(a+b+d, d+haut, a/2, a/2); 
-  view = src.get( viewX,viewY, viewSize, viewSize); turing2(view); 
-  viewing = false ;
-  imageMode(CENTER); image(view, gauche+srcMin.width+(a-srcMin.width+a+a/2)/2, haut+a/2); imageMode(CORNER);
-}
-void controlEvent (ControlEvent theEvent) {
-  println("got a control event from controller with name " + theEvent.getName() );
+  if ( viewing )       gui.elements.get(0).update() ;
+  if ( synchroScroll ) gui.elements.get(0).dragged();
 
-  if ( theEvent.getName() == "new file" ) { }  
-  if ( theEvent.getName() == "renderControl" ) render(); 
-  if ( theEvent.getName() == "export" )   {  }
-  if ( theEvent.getName() == "specimen" ) {  }
+  if ( pmouseX!=mouseX || pmouseY!=mouseY)                  gui.injectMouseMoved  (); // mousMoved listener
+  if ((pmouseX!=mouseX || pmouseY!=mouseY) && mousePressed) gui.injectMouseDragged (); // mousDragged listener
 
-  if ( theEvent.getName() == "load" ) {  }
-  if ( theEvent.getName() == "save" ) {   }
-}
-
-void render(){
-  currentI = src.get();
-  turing2(currentI); 
-  image(currentI, 3*a+35+d, d ); // ,(currentI.width*(height-d))/currentI.height, height-d); 
-}
-float[][] videoCtrl = new float[4][8] ; // iniSlider, iniKnob, finSlider, finKnob
-int videoName = 0;
-String instanceVideoFolder = ""+random(0, 1);
-void saveVideo(){
-  for (int i = 1; i<=frames; i++){ videoName++;
-    currentI = src.get();
-    for (int j = 0; j<8; j++){
-      slider[j] = map(i,0,frames,videoCtrl[0][j],videoCtrl[2][j]);
-      knob  [j] = map(i,0,frames,videoCtrl[1][j],videoCtrl[3][j]);
-    }
-    turing2(currentI); 
-    image(currentI, 3*a+35+d, d );
-    currentI.save("video/animation_"+instanceVideoFolder+"/"+videoName+".png");
+  if (listenerWidth!=width || listenerHeight!=height) {  // resize listener
+    listenerWidth=width; listenerHeight=height; 
+    gui.resize(); 
+    gui.update();
   }
-}
-void keyPressed(){
-  if ( keyCode == CONTROL) control = true;
-  if (key == 'i') src.filter(INVERT);
-  if (key == '+') src.resize(int(src.width+100),0);  if (key == '-') src.resize(int(src.width-100),0);
-  if (key == 'v') { for (int i = 0; i<8; i++){ videoCtrl[0][i]=slider[i];  videoCtrl[1][i]=knob[i];  saved[i]=slider[i]+" "+knob[i] ; }              saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-V.trm", saved); }
-  if (key == 'b') { for (int i = 0; i<8; i++){ videoCtrl[2][i]=slider[i];  videoCtrl[3][i]=knob[i];  saved[i]=slider[i]+" "+knob[i] ; } saveVideo(); saveStrings( "video/animation_"+instanceVideoFolder+"/"+videoName+"-B.trm", saved); }
-  if (key == 'a') {  selectFolder("Select a folder to process:", "folderSelected");  } 
-}
-ArrayList<File> filesList = new ArrayList<File>();
-
-void folderSelected(File selection) {
-  if (selection!=null) {
-// export PNG
-currentI.save(selection.getAbsolutePath()+"/"+frameCount+"_test.png");
-
-// compute multi-frames for video txture
-/*    File file = new File(selection.getAbsolutePath());
-    File[] files = file.listFiles();
-    for (int i = 0; i < files.length; i++) {
-      filesList.add(files[i]);
-    }
-  }
-  int count = 0;
-  int folder = int(random(0, 100000));
-  for(File f : filesList){ count++;
-    src=loadImage(selection.getAbsolutePath()+"/"+f.getName()); 
-    src.filter(GRAY);
-    render(); 
-    currentI.save("video/video_"+folder+"/"+count+".png");*/
-
-  }
-}
-void keyReleased()  { control = false; }
-void mousePressed() { for (BiSlider o : bi){ o.pressed(); } di.pressed(); mono.pressed(); }
-void mouseDragged(){ for (BiSlider o : bi) { o.dragged(); } di.dragged(); mono.dragged(); mapImg.dragged(); }
-void mouseMoved(){ 
-  di.mouved();  
-  bi[0].mouved(); 
-  bi[1].mouved(); 
-  mono.mouved();
-  mapImg.mouved(); 
-  for (int i = 0; i<button.length; i++){ button[i].mouved(); }
-}
-void mouseReleased(){ 
-  for (BiSlider o : bi){ o.released(); mono.released(); } 
-  for (int i = 0; i<snaps.snap.length; i++) { snaps.pressed(i); }
-  di.released(); 
-
-  if ( button[0].over ) { noLoop(); selectInput("Select your image", "fileSelected"); viewing = true ; } // "new file"
-  if ( button[1].over ) { render(); selectFolder("Select a folder to process:", "folderSelected"); }               // "export"  
-  if ( button[2].over ) { noLoop();  selectInput( "Select TexTuring settings file", "loadParameters"); viewing = true ; } // "load"    
-  if ( button[3].over ) { noLoop();  selectOutput("Name your TexTuring settings file", "saveParameters"); } // "save"    
-  if ( button[4].over ) { noLoop(); selectOutput("Nomez votre spécimen", "saveSpecimen"); }              // "specimen"
-  if ( button[5].over ) { render(); } // "render"  
-
-/*  if ( theEvent.getName() == "iterations" )    { slider[0] = theEvent.getController().getValue(); viewing = true ;}
-  if ( theEvent.getName() == "threshold" )     { slider[1] = theEvent.getController().getValue(); viewing = true ;}
-  if ( theEvent.isFrom(checkbox) )             { button[0] = !button[0] ;     viewing = true ;}
-*/
+    if (height<710) surface.setSize ( width, 710 );
 }
 
-void fileSelected(File selection) { lastPath=selection.getAbsolutePath(); 
-  src=loadImage(lastPath); 
-  src.filter(GRAY);
-  w=src.width;
-  h=src.height;
-  if(w>h) { srcMin = src.get(); srcMin.resize(a,0); }
-  if(w<=h) { srcMin = src.get(); srcMin.resize(0,a); }
-  //cp5.getController("largeur (px)").setText(src.width+"");
-  fill(colorElemBg); rect(gauche,haut,2*a+a/2+b,a); // setup view
-  mapImg.setup();
-  viewing = true ;
-  loop(); 
-}
-void saveSpecimen(File selection){ 
-  for (int i = 0; i<8; i++){ saved[i] = slider[i]+" "+knob[i] ; } 
-  //saveStrings( selection.getAbsolutePath()+".trm", saved) ;
-  render(); //currentI.save(selection.getAbsolutePath()+".png");
-  fileToPrinter("specimen.pdf");
-  loop(); 
-}
-void saveParameters(File selection){ 
-  for (int i = 0; i<8; i++){ saved[i] = slider[i]+" "+knob[i] ; } 
-  saveStrings( selection.getAbsolutePath()+".trm", saved) ;
-  loop(); 
-}
-void loadParameters(File selection){ setParam(loadStrings(selection.getAbsolutePath())); loop(); }
-void setParam ( String data[] ) {           
-  for (int i = 0; i<8; i++) { 
-    String[] n = split(data[i]," "); 
-    slider[i] = int(n[0]); 
-    knob[i] = int(n[1]); 
-  }
-  for (BiSlider o : bi) { o.setup(); } di.setup();
-  // TODO slider[iterations].setValue(slider[0]);
-  // TODO slider[ threshold].setValue(slider[1]);
-  map=true; turing2(di.mapImg); map=false;
-  viewing = true ;
-}
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void mousePressed (){ gui.injectMousePressed (); }
+void mouseReleased(){ gui.injectMouseReleased(); }
+void mouseWheel(processing.event.MouseEvent event) { gui.injectMouseWheel(event.getCount()); }
 
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+PImage render(PImage imageIn, int widthOut ){
+  PImage image = imageIn.get();
+  int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
 
-void fileToPrinter(String fileName) {
-  try {
-    ProcessBuilder pb = new ProcessBuilder("lpr", fileName);
-    Process p = pb.start();
-  } catch (IOException e) { println(e); }
-}
+  image.resize(imgWidth, 0 );
 
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////// reaction - diffusion /////////////// TURING
 
-PImage turing2(PImage img) {
-frame.setTitle ("TexTuring - computing ..." );  
-
-int left, right, up, down, W = img.width, H = img.height;  float uvv, u, v;
-float diffU, diffV, F, K; 
-int[][] offsetW = new int[W][2], offsetH = new int[H][2];
-float[][]  U = new float[W][H],  V = new float[W][H];
-float[][] dU = new float[W][H], dV = new float[W][H];
-float lapU, lapV;
-
-  for (int i = 0; i < W; i++) {
-    for (int j = 0; j < H; j++) {
-      U[i][j] = 1.0;
-      V[i][j] = 0.0;
-    }
-  }
-  img.loadPixels();                  //  INITIALISATION
-    float noiseZoom = 0.01;
-
-    for (int i = 0; i < W; i++) {
-      for (int j = 0; j < H; j++) {        
-        U[i][j] = 0.8*(noise(i*noiseZoom,j*noiseZoom));
-        V[i][j] = 0.45*(noise(i*noiseZoom,j*noiseZoom));
-        //U[i][j] = random(0,0.5);
-        //V[i][j] = random(0,0.25);
-      }
-    }  
-  img.updatePixels();
-  //Set up offsets
-  for (int i=1; i < W-1; i++) { offsetW[i][0] = i-1; offsetW[i][1] = i+1; }
-  for (int i=1; i < H-1; i++) { offsetH[i][0] = i-1; offsetH[i][1] = i+1; }
-  offsetW[0][0] = W-1; offsetW[0][1] = 1; offsetW[W-1][0] = W-2; offsetW[W-1][1] = 0;
-  offsetH[0][0] = H-1; offsetH[0][1] = 1; offsetH[H-1][0] = H-2; offsetH[H-1][1] = 0;
-
-  //diffU = 0.16; diffV = 0.08; F = 0.035;  K = 0.06;
-
-  float[][][] fkuv = new float[W][H][4];  // init param grid
-  float[] maxi = { 0.15, 0.07, 0.1, 0.1 };
-  int[] controlSize = { a, a, a, a };
-  for (int i = 0; i<W; i++){
-    for (int j = 0; j<H; j++){
-      for (int k = 0; k<4; k++){
-        if(map==false) {
-          fkuv[i][j][k] = map( brightness(img.pixels[j*W+i]),0,255, 
-            map(slider[k+4],0,controlSize[k],0,maxi[k]), 
-            map(knob[k+4],0,controlSize[k],0,maxi[k]));
-            //map(slider[k+4],0,controlSize[k],0,maxi[k]) + map(knob[k+4],0,controlSize[k],0,maxi[k]));
-        } 
-      }
-      if(map==true) {
-        fkuv[i][j][0] = map( i, 0, W, 0, maxi[0]);
-        fkuv[i][j][1] = map( j, 0, W, maxi[1], 0);  
-        fkuv[i][j][2] = map(slider[6],0,controlSize[2],0,maxi[2]);
-        fkuv[i][j][3] = map(slider[7],0,controlSize[3],0,maxi[3]);
-      }
-    }
-  }
-
-  for (int n = 0; n<slider[0]*6+1; n++){  // reaction diffusion
-    for (int i = 0; i < W; i++) {
-      for (int j = 0; j < H; j++) {
-
-        F = fkuv[i][j][0] ;
-        K = fkuv[i][j][1] ;
-        diffU = fkuv[i][j][2] ;
-        diffV = fkuv[i][j][3] ;
-
-        u = U[i][j];  
-        v = V[i][j]; 
-        left  = offsetW[i][0]; right = offsetW[i][1];
-        up    = offsetH[j][0]; down  = offsetH[j][1];
-
-        lapU = U[left][j] + U[right][j] + U[i][up] + U[i][down] - (u+u+u+u);
-        lapV = V[left][j] + V[right][j] + V[i][up] + V[i][down] - (v+v+v+v);
-
-        uvv = u*v*v;
-        dU[i][j] = diffU*lapU  - uvv + F*(1 - u);
-        dV[i][j] = diffV*lapV + uvv - (K+F)*v;
-      }
-    }
-    for (int i = 0; i < W; i++) {
-      for (int j = 0; j < H; j++) {
-        U[i][j] += dU[i][j];
-        V[i][j] += dV[i][j];
-      }
-    }
-    frame.setTitle ("TexTuring - computing ["+int( (100*n)/(slider[0]*7))+"%]" );
-  }
+  turing2(image, false);
   
-  img.loadPixels();
-    int pShift,pShift2;
-    for (int i = 0; i < W; i++) {
-      for (int j = 0; j < H; j++) {
-        pShift = int( U[i][j]*255 ) ;
 
-        if( !greyScale && pShift<slider[1] ) { img.pixels[j*W+i] = color(0); } else { img.pixels[j*W+i] = color(255); }
-        if( greyScale ) img.pixels[j*W+i] =  0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
-        if( map && pShift<slider[1] ) { img.pixels[j*W+i] = C[18]; } else if(map){ img.pixels[j*W+i] = color(255); }
+  //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
+  BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);  // load PImage to bufferImage 
+  image = new PImage(scaledImg);
 
-      }
-    }
-  img.updatePixels();
-  //console.setText("").setColor(colorFont);
-  frame.setTitle ("TexTuring" );
-  return img;
+  if (threshold) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+
+  return image ;
 }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+void exportImage() {
+  String[] extention = { ".png", ".gif animation", ".pdf specimen", ".svg [experimental]" };
+  JTextField nameField = new JTextField(12); nameField.setText( "TexTuring-output_"+int(random(9999)) );
+  JTextField sizeField = new JTextField(5); sizeField.setText( ""+(int) params.o[2]*src.width/100 );
+  JComboBox extField = new JComboBox( new DefaultComboBoxModel(extention) );
+  JFileChooser pathField = new JFileChooser();
 
- /*
-void turing1() {
-  generateInitialState();
+  if (lastDirectory != null) pathField.setCurrentDirectory( lastDirectory ); 
+  pathField.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
-  for (int i = 1; i < N-1; i++) {  //Set up offsets
-    offset[i][0] = i-1;
-    offset[i][1] = i+1;
+  JPanel p1 = new JPanel(); p1.add(pathField);
+  JPanel p2 = new JPanel(); 
+  p2.add(new JLabel("Image name : ")); p2.add(nameField);
+  p2.add(extField);
+  p2.add(Box.createHorizontalStrut(30)); p2.add(new JLabel("Image width: ")); p2.add(sizeField); p2.add(new JLabel(" pixels"));
+  JPanel outer = new JPanel(new BorderLayout());
+  outer.add(p1, BorderLayout.NORTH);
+  outer.add(p2, BorderLayout.CENTER);
+
+  int result = JOptionPane.showConfirmDialog(null, outer, "Select export options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+  if (result == JOptionPane.OK_OPTION) {
+
+    lastDirectory = pathField.getCurrentDirectory();
+    String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() ;  
+    println("savedPath: "+ path + "["+ extField.getSelectedItem() +"]" );
+
+
+    if ( extention[0].equals(extField.getSelectedItem()) ) { 
+
+      if( gui.state == "multiFiles" ){
+        for ( int i=0; i < gui.listOfFiles.size(); ++i ) {
+          src = loadImage( gui.listOfFiles.get(i).getAbsolutePath() );
+          saveImage( render(src, int(sizeField.getText()) ), 
+            pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() ); 
+        }
+      } else {
+        saveImage( render(src, int(sizeField.getText()) ) , path + ".png" ); 
+      }
+    }
+
+
+    if ( extention[1].equals(extField.getSelectedItem()) ) { 
+      // second message box to get gif export infos
+      JPanel p3 = new JPanel(); 
+      JPanel p4 = new JPanel(); 
+      JTextField nbrFrameField = new JTextField(4); nbrFrameField.setText( "10" );
+      p3.add(nbrFrameField); 
+      p3.add(new JLabel("<html> frames from <i>begining sample</i> to <i>ending sample</i></html>"));
+      JTextField durationField = new JTextField(4); durationField.setText( "0.1" );
+      p4.add(durationField);
+      p4.add(new JLabel("<html> seconds per frame</html>"));
+      JPanel outer2 = new JPanel(new BorderLayout());
+      outer2.add(p3, BorderLayout.NORTH);
+      outer2.add(p4, BorderLayout.SOUTH);
+
+      int result2 = JOptionPane.showConfirmDialog(null, outer2, "Select animation export options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+      if (result2 == JOptionPane.OK_OPTION) {
+
+        gifExport = new GifMaker(this, path + ".gif" );
+        gifExport.setRepeat(0); // infinite
+        gifExport.setQuality(10); // default 10
+
+        params.loadParameters( gui.elements.get(7).savedParams );
+
+        // render every frames
+        for (int i=0; i < int(nbrFrameField.getText()); ++i) {
+          
+          gifExport.setDelay( int( float( durationField.getText() )*1000 ) ); // convert sec to ms 
+          gifExport.addFrame( render(src, int(sizeField.getText())) );
+          params.nextFrameAnimation( int( nbrFrameField.getText() ), gui.elements.get(8).savedParams );
+        }
+      
+        gifExport.finish();
+      }
+    }
+
+    if ( extention[2].equals(extField.getSelectedItem()) ) { 
+      
+      PGraphics pdf = createGraphics(3000, 4243, PDF, path + ".pdf");
+      pdf.beginDraw();
+      pdf.background(255);
+      pdf.image(render(src, 3000), 0, 150);
+      pdf.fill(0);
+      pdf.textSize(36);
+      
+      pdf.text("TexTuring 1.0",20,40);
+      pdf.text(nameField.getText(),120,40);
+
+      pdf.text("Growing Time : " + params.o[0],500,40);
+      pdf.text("Threshold : "    + params.o[1],500,80);
+      pdf.text("Size : "         + params.o[2],500,120);
+      
+      String[] label = { "Bay X","Bay Y","Feed","Kill" };
+      for (int i = 0; i < 4; ++i) {
+        pdf.text(label[i]                  ,1000+i*500,40);
+        pdf.text( "Black : " + params.b[i] ,1000+i*500,80);
+        pdf.text( "White : " + params.w[i] ,1000+i*500,120);
+      }
+
+      pdf.dispose();
+      pdf.endDraw();
+    }
+    if ( extention[3].equals(extField.getSelectedItem()) ) { 
+      svgConverter( render(src, int(params.o[2]*src.width/100)*2 ), 1, path + ".svg" );
+    }
   }
-  offset[0][0] = N-1;   offset[0][1] = 1;  
-  offset[N-1][0] = N-2; offset[N-1][1] = 0;
-
-  diffU = map(slider[4],0,127,0,0.1); diffV = map(slider[5],0,127,0,0.1); F = map(slider[6],0,127,0,0.1); K = map(slider[7],0,127,0,0.1);
-  diffU = 0.16; diffV = 0.08; 
-
-  for (int n = 0; n<slider[0]*4+1; n++){
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-         
-        u = U[i][j];  
-        v = V[i][j]; 
-        left  = offset[i][0];
-        right = offset[i][1];
-        up    = offset[j][0];
-        down  = offset[j][1];
-         
-        uvv = u*v*v;    
-        double lapU = (U[left][j] + U[right][j] + U[i][up] + U[i][down] - 4*u);
-        double lapV = (V[left][j] + V[right][j] + V[i][up] + V[i][down] - 4*v);
-         
-        dU[i][j] = diffU*lapU  - uvv + F*(1 - u);
-        dV[i][j] = diffV*lapV + uvv - (K+F)*v;
-      }
-    }
-              
-    for (int i= 0; i < N; i++) {
-      for (int j = 0; j < N; j++){
-          U[i][j] += dU[i][j];
-          V[i][j] += dV[i][j];
-      }
-    }
-  }
-
-  loadPixels();
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < N; j++) {
-        pixels[i*N+j] = color( (float)(U[i][j]*255) ) ;
-      }
-    }
-  updatePixels();
 }
- 
-void generateInitialState() {
-  for (int i = 0; i < N; i++) {
-    for (int j = 0; j < N; j++) {
-      U[i][j] = 1.0;
-      V[i][j] = 0.0;
-    }
+
+
+void saveImage ( PImage img, String path ) {
+
+  PGraphics pg = null ;
+  pg = createGraphics(img.width, img.height); 
+  pg.beginDraw();
+  pg.image(img,0,0);
+  pg.endDraw();
+  pg.get().save( path );
+  gui.message("image file saved");
+}
+
+void fileSelected(File selection) { 
+  if (selection !=null) {
+    lastPath = selection.getAbsolutePath(); 
+    PImage tmp = loadImage(lastPath);
+    tmp.filter(GRAY);
+    src = createImage(tmp.width, tmp.height, ALPHA);
+    src.copy(tmp,0,0,src.width, src.height,0,0,src.width, src.height);
+    w = src.width;
+    h = src.height;
+    gui.update();
+    gui.elements.get(0).scroll(-1);
+    viewing = true ;
+    params.o[2] = (int)map(w+h,1000,10000,150,20) ; // setup a proper dithering resolution
+    if (params.o[2]<5) params.o[2]=5;
+    if (params.o[2]>255) params.o[2]=255;
   }
-  src.loadPixels();
-  for (int i = 0; i < N; i++) {
-    for (int j = 0; j < N; j++) {    
-      switch (init) {
-        case 0:    
-          U[i][j] = 0.5*(1 + random(-1, 1));
-          V[i][j] = 0.25*( 1 + random(-1, 1));
-        break;
-        case 1:
-          U[i][j] = map(brightness(src.pixels[i*N+j]),0,255,1,0.5);
-          V[i][j] = map(brightness(src.pixels[i*N+j]),0,255,0,0.25);
-        break;
+}
+void folderSelected(File selection) {
+  if ( selection !=null ) {
+
+    File viewFile = null;
+    File[] files = selection.listFiles();
+
+    for ( File file : files ) {
+      if ( file.isFile() && validImageFile( file ) ) {
+        gui.listOfFiles.add( file );
+        viewFile = file;
       }
     }
-  }  
-  src.updatePixels();
+    if ( viewFile !=null ){
+      fileSelected( viewFile );
+      gui.state = "multiFiles";
+      gui.message(gui.listOfFiles.size()+" images loaded");
+    }
+  }
 }
- 
-*/
+
+void keyReleased()  { 
+  control = false; 
+}
