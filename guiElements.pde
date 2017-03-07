@@ -4,6 +4,7 @@ class GuiElement {
   int ref;
   boolean isOver = false;
   boolean isVisible = true;
+  boolean dropState = false;
   Parameters savedParams ;
   String flag = "";
 
@@ -42,6 +43,7 @@ class GuiElement {
   void resize() {}
   void message(String msg) {}
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Menu extends GuiElement {
 
@@ -78,7 +80,7 @@ Rect zone;
     buttonPressed( this );
   }
 }
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Button extends GuiElement {
   
@@ -104,7 +106,7 @@ class Button extends GuiElement {
     if (name=="About") coords = new Rect( width-d-coords.size.x , coords.pos.y, coords.size.x, coords.size.y );
   }
 }
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CheckBox extends GuiElement {
   boolean b = false;
@@ -125,7 +127,7 @@ class CheckBox extends GuiElement {
     gui.injectMouseMoved();
   }
 }
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class StatusBar extends GuiElement {
   String txt = "init";
@@ -148,7 +150,7 @@ class StatusBar extends GuiElement {
     coords = new Rect( coords.pos.x , coords.pos.y, width-coords.pos.x-50-d, coords.size.y );
   }
 }
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Slider extends GuiElement {
   int range; 
@@ -195,6 +197,7 @@ class Slider extends GuiElement {
     popMatrix();
   }  
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class ViewPort extends GuiElement {
   Rect viewZone ;
@@ -235,12 +238,12 @@ class ViewPort extends GuiElement {
     }
   }
 
-  void renderView(){
+  void renderView(){  // render all the viewPort
     updateView();
     viewImg = render(viewImg, (int)coords.size.x );
     gui.message("Last render in "+ lastRenderTime + " sec");
 
-    image(viewImg, coords.pos.x, coords.pos.y ); // display rendered image
+    image(viewImg, coords.pos.x, coords.pos.y );
 
     isRender = true ;
     viewing = false ;
@@ -254,17 +257,25 @@ class ViewPort extends GuiElement {
 
   void update(){
     fill(bg); drawRect(coords); // background
+    
     image(viewImg, coords.pos.x, coords.pos.y, coords.size.x, coords.size.y ); // display original image 
+    println("draw img " + dropState);
+
+    if( dropState ) { 
+      fill( colorActive,100 ); 
+      rect( coords.pos.x, coords.pos.y, coords.size.x, coords.size.y );
+      dropState=false;
+    }
 
     // render renderZone
     if( viewing ){    
       viewing = false ;
-      if ( isRender ) updateView();
+      if( isRender ) updateView();
       // set renderZone size
-      if(lastRenderTime <0.06) { centerSize+=2 ;} else if (lastRenderTime >0.09) { centerSize-=2 ;};
-      if(lastRenderTime <0.04) { centerSize+=10 ;} else if (lastRenderTime >0.11) { centerSize-=10 ;};
-      if (coords.size.x<coords.size.y) centerSize = constrain( centerSize, 60, coords.size.x*zoom );
-      if (coords.size.x>coords.size.y) centerSize = constrain( centerSize, 60, coords.size.y*zoom );
+      if( lastRenderTime <0.06 ){ centerSize+=2 ;} else if (lastRenderTime >0.09) { centerSize-=2 ;};
+      if( lastRenderTime <0.04 ){ centerSize+=10 ;} else if (lastRenderTime >0.11) { centerSize-=10 ;};
+      if( coords.size.x<coords.size.y ) centerSize = constrain( centerSize, 60, coords.size.x*zoom );
+      if( coords.size.x>coords.size.y ) centerSize = constrain( centerSize, 60, coords.size.y*zoom );
       // set the renderZone position
       centerRectX = ( coords.size.x - centerSize/zoom )/2 ;
       centerRectY = ( coords.size.y - centerSize/zoom )/2 ;
@@ -288,6 +299,7 @@ class ViewPort extends GuiElement {
     if (isOver() && mousePressed) { cursor(MOVE); }else if(isOver()) { cursor(CROSS); }else{ cursor(ARROW); }
   }
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Snap extends GuiElement {
   PImage snap;
@@ -351,7 +363,7 @@ class Snap extends GuiElement {
   }
 }
 
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class BiSlider extends GuiElement {
   int m, sh=20; 
@@ -422,6 +434,7 @@ class BiSlider extends GuiElement {
     popMatrix(); textAlign(LEFT);
   }  
 }
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class DiSlider extends GuiElement { 
   Rect handle[] = new Rect[2];

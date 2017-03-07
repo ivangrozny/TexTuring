@@ -3,7 +3,7 @@ import java.awt.event.*;
 import java.awt.BorderLayout;
 import java.awt.image.BufferedImage;
 import processing.pdf.*;
-
+import drop.*; SDrop drop; MyDropListener dropListener;
 
 boolean control = false, live = true, updateDiSliderImage = false, viewing = false, threshold = true;
 boolean synchroScroll = false;
@@ -34,18 +34,17 @@ void setup() {
   params = new Parameters();
   gui = new GuiWindow();
   gui.setupGui();
-  fileSelected( new File(dataPath("launch.jpg")) );                        // file selected at TexTuring launch
+  fileSelected( new File(dataPath("launch.jpg")) );           
   params.loadFile( new File(dataPath("default.texturing")) );
-  
-  PImage titlebaricon = loadImage("logo.png");
-  surface.setIcon(titlebaricon);
+  initDrop();
 }
 
 void draw() {
+  fill( (frameCount%2==0)?100:200 ); rect(10,800,500-frameCount*2%400,50);  // debug mode
+
   if ( viewing )       gui.elements.get(0).update() ;
   if ( synchroScroll ) gui.elements.get(0).dragged();
-
-  if ( pmouseX!=mouseX || pmouseY!=mouseY)                  gui.injectMouseMoved  (); // mousMoved listener
+  if ( pmouseX!=mouseX || pmouseY!=mouseY)                  gui.injectMouseMoved (); // mousMoved listener
   if ((pmouseX!=mouseX || pmouseY!=mouseY) && mousePressed) gui.injectMouseDragged (); // mousDragged listener
 
   if (listenerWidth!=width || listenerHeight!=height) {  // resize listener
@@ -53,37 +52,30 @@ void draw() {
     gui.resize(); 
     gui.update();
   }
-    if (height<710) surface.setSize ( width, 710 );
 }
-
 void mousePressed (){ gui.injectMousePressed (); }
 void mouseReleased(){ gui.injectMouseReleased(); }
 void mouseWheel(processing.event.MouseEvent event) { gui.injectMouseWheel(event.getCount()); }
-
-
+void keyReleased()  {control = false; }
 
 PImage render(PImage imageIn, int widthOut ){
   PImage image = imageIn.get();
   int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
 
   image.resize(imgWidth, 0 );
-
-
   turing2(image, false);
-  
 
   //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
   BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);  // load PImage to bufferImage 
   image = new PImage(scaledImg);
 
   if (threshold) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
-
   return image ;
 }
 
 void exportImage() {
   String[] extention = { ".png", ".gif animation", ".pdf specimen", ".svg [experimental]" };
-  JTextField nameField = new JTextField(12); nameField.setText( "TexTuring-output_"+int(random(9999)) );
+  JTextField nameField = new JTextField(12); nameField.setText( "TexTuring-"+int(random(9999)) );
   JTextField sizeField = new JTextField(5); sizeField.setText( ""+(int) params.o[2]*src.width/100 );
   JComboBox extField = new JComboBox( new DefaultComboBoxModel(extention) );
   JFileChooser pathField = new JFileChooser();
@@ -236,8 +228,4 @@ void folderSelected(File selection) {
       gui.message(gui.listOfFiles.size()+" images loaded");
     }
   }
-}
-
-void keyReleased()  { 
-  control = false; 
 }

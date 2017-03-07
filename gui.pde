@@ -10,8 +10,8 @@ class GuiWindow {
   void setupGui(){  
     try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) { e.printStackTrace(); }  //  platform specific UI
   
+    surface.setIcon( loadImage("logo.png") );
     colorMode(HSB); for (int i=0;i<=25;i++) C[i] = color(123,270-i*13,100+i*5); // create UI color shades
-
     background( bg );
     noStroke();
     PFont font = loadFont("PixelOperator-16.vlw"); textFont(font, 16);
@@ -19,7 +19,7 @@ class GuiWindow {
     int guiWidth = 350;
     Rect guiRect = new Rect(d, d, 100, 22 );
                           elements.add(new Menu  (new Rect(guiRect), new String[]{ "Parameters", "Save settings", "Load settings" } ));
-guiRect.size.x = 113;
+    guiRect.size.x = 113;
     guiRect.pos.x += 190; elements.add(new Menu  (new Rect(guiRect), new String[]{ "Input  image", "Select file", "Select folder" } ));
     guiRect.pos.x += 118; elements.add(new Menu  (new Rect(guiRect), new String[]{ "Seeding mode", "noise", "monochrome", "regular" } ));
     guiRect.pos.x += 118; elements.add(new Button(new Rect(guiRect), "Export  image"));
@@ -44,7 +44,7 @@ guiRect.size.x = 113;
     guiRect.size.x = 22; elements.add(new CheckBox(new Rect(guiRect), "check threshold"));  
 
     guiRect = new Rect( 200+50, guiRect.pos.y, 250, 250 );
-    guiRect.pos.y += 50; elements.add(new DiSlider(new Rect(guiRect), "From Growing bay to shade of greys"));
+    guiRect.pos.y += 50; elements.add(new DiSlider(new Rect(guiRect), "From Growing bay to shades of grey"));
     
     guiRect.size.x = guiWidth+10; guiRect.size.y = 60; guiRect.pos.x= 200;
     guiRect.pos.y += 300; elements.add(new BiSlider(new Rect(guiRect), "reaction","Feed rate"));
@@ -66,14 +66,16 @@ guiRect.size.x = 113;
   void update(){     
     updateDiSliderImage = true ;
     viewing = true ;
-    for (GuiElement elem : elements) { elem.update(); }  fill(colorFont); text("Samples", d, d+100 -10 );
-
+    for (GuiElement elem : elements) {
+      elem.update(); 
+    }  
+    fill(colorFont); text("Samples", d, d+100 -10 );
   }
   void resize(){ for (GuiElement elem:elements) elem.resize(); }
   void message(String msg){ elements.get(1).message(msg); }
   void about(){ 
     JPanel aboutPane = new JPanel(new BorderLayout());
-    String txt = "<html><h2>TexTuring 1.0</h2>General Public Licence - GNU GPL<br><br>Dithering tool based on natural patterns.<br>TexTuring is a tool to ease the use of reaction-diffusion model.<br><br><br>Project initiated by <a href='http://www.ivan-murit.fr'>Ivan Murit</a><br>Special thanks to the crowd-founders for the initial support !<br><br></html>";
+    String txt = "<html><h2>TexTuring 1.0</h2>General Public Licence - GNU GPL<br><br>Dithering tool based on natural patterns.<br>TexTuring is a tool to ease the use of reaction-diffusion model.<br><br><br>Project initiated by <a href='www.ivan-murit.fr'>www.ivan-murit.fr</a><br>Special thanks to the crowd-founders for the initial support !<br><br></html>";
     aboutPane.add(new JLabel(txt));
     int aboutResult = JOptionPane.showConfirmDialog(null, aboutPane, "About", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
 
@@ -87,12 +89,12 @@ void keyPressed(){
   if (key=='+')  gui.elements.get(0).scroll(-1); 
   if (key=='-')  gui.elements.get(0).scroll(1); 
   if (key==' ')  gui.elements.get(0).renderView();
-  if (key=='r')  gui.elements.get(0).renderView();
+  if (key==ENTER)  gui.elements.get(0).renderView();
   if ( keyCode == CONTROL) control = true;
 }
 
 void buttonPressed( GuiElement _elem ){
-    if ( _elem.name == "Select file" ) { selectInput("Select a new image", "fileSelected"); viewing = true ; } 
+    if ( _elem.name == "Select file" ) { selectInput("Select a new image", "fileSelected"); } 
     if ( _elem.name == "Select folder" ) { selectFolder("Select a folder to process:", "folderSelected");} 
     if ( _elem.name == "Export  image" ) { exportImage(); }       
     if ( _elem.name == "Load settings" ) {     selectInput( "Select TexTuring settings file", "loadFile"); viewing = true ; } 

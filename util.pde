@@ -50,6 +50,46 @@ class Rect
 }
 
 /////////////////////////////////////////////////////////////////////////////////
+void initDrop(){
+  drop = new SDrop(this);
+  dropListener = new MyDropListener();
+  drop.addDropListener(dropListener);
+}
+
+void dropEvent(DropEvent event) {}
+
+// a custom DropListener class.
+class MyDropListener extends DropListener {
+  
+  int myColor;
+  
+  MyDropListener() {
+    myColor = color(255);
+    setTargetRect(20,20,width-40,height-40);
+  }
+  
+  void draw() {
+    fill(myColor);
+    rect(10,10,100,100);
+  }
+  void dropEnter() { 
+    gui.elements.get(0).dropState = true; 
+    viewing = true;
+  }
+  void dropLeave() { 
+    gui.elements.get(0).dropState = false; 
+    viewing = true;
+  }
+  
+  void dropEvent(DropEvent event) {
+    if(event.isFile()) {
+      if( event.isImage() )            fileSelected( event.file() ); 
+      if( event.file().isDirectory() ) folderSelected( event.file() ); 
+      if( event.file().getName().toLowerCase().indexOf("texturing") > -1 ) params.loadFile( event.file() ); 
+    }
+  }
+}
+/////////////////////////////////////////////////////////////////////////////////
 
 boolean isOver (float x, float y, float w, float h) {
   if (mouseX >= x && mouseX <= x+w && mouseY >= y && mouseY <= y+h) { return true ; }
