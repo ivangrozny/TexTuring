@@ -40,7 +40,7 @@ void setup() {
 }
 
 void draw() {
-  fill( (frameCount%2==0)?100:200 ); rect(10,800,500-frameCount*2%400,50);  // debug mode
+  fill( (frameCount%2==0)?100:200 ); rect(10,950,500-frameCount*2%400,50);  // debug mode
 
   if ( viewing )       gui.elements.get(0).update() ;
   if ( synchroScroll ) gui.elements.get(0).dragged();

@@ -241,6 +241,7 @@ class ViewPort extends GuiElement {
   void renderView(){  // render all the viewPort
     updateView();
     viewImg = render(viewImg, (int)coords.size.x );
+    //viewImg.resize(viewImg.width/3,viewImg.height/3);
     gui.message("Last render in "+ lastRenderTime + " sec");
 
     image(viewImg, coords.pos.x, coords.pos.y );
@@ -288,13 +289,14 @@ class ViewPort extends GuiElement {
         myThread.sizeOut = int( centerSize/zoom ) ; myThread.srcMin = srcMin ;
         myThread.start(); 
 */
-      renderMin = render(srcMin, int( centerSize/zoom ) );
+      renderMin = render(srcMin, int( centerSize/zoom )*3 );
+      renderMin.resize(renderMin.width/3,renderMin.height/3);
     }
     
     //if (myThread.getImg()!=null) renderMin = myThread.getImg();
 
     if ( !isRender )
-      image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); // render image display
+      image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); 
 
     if (isOver() && mousePressed) { cursor(MOVE); }else if(isOver()) { cursor(CROSS); }else{ cursor(ARROW); }
   }
