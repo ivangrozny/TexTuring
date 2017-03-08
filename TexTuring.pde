@@ -28,7 +28,7 @@ void setup() {
   listenerHeight=height; listenerWidth=width;
   surface.setResizable(true);
   surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
-  frameRate(25);
+  frameRate(30);
 
   //myThread = new MyThread();
   params = new Parameters();
@@ -40,7 +40,7 @@ void setup() {
 }
 
 void draw() {
-  fill( (frameCount%2==0)?100:200 ); rect(10,950,500-frameCount*2%400,50);  // debug mode
+  fill( (frameCount%2==0)?100:200 ); rect(10,1000,500-frameCount*2%400,30);  // debug mode
 
   if ( viewing )       gui.elements.get(0).update() ;
   if ( synchroScroll ) gui.elements.get(0).dragged();
@@ -55,23 +55,9 @@ void draw() {
 }
 void mousePressed (){ gui.injectMousePressed (); }
 void mouseReleased(){ gui.injectMouseReleased(); }
+void mouseMoved(){ if (gui.elements.get(0).isOver() ){ cursor(MOVE); }else{ cursor(ARROW); } }
 void mouseWheel(processing.event.MouseEvent event) { gui.injectMouseWheel(event.getCount()); }
-void keyReleased()  {control = false; }
-
-PImage render(PImage imageIn, int widthOut ){
-  PImage image = imageIn.get();
-  int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
-
-  image.resize(imgWidth, 0 );
-  turing2(image, false);
-
-  //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
-  BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);  // load PImage to bufferImage 
-  image = new PImage(scaledImg);
-
-  if (threshold) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
-  return image ;
-}
+void keyReleased(){ control = false; }
 
 void exportImage() {
   String[] extention = { ".png", ".gif animation", ".pdf specimen", ".svg [experimental]" };

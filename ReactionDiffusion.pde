@@ -1,14 +1,29 @@
+PImage render(PImage imageIn, int widthOut ){
+  PImage image = imageIn.get();
+  int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
+
+  image.resize(imgWidth, 0 );
+  algoReacionDiffusion(image, false);
+
+  //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
+  BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);  // load PImage to bufferImage 
+  image = new PImage(scaledImg);
+
+  if (threshold) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+  return image ;
+}
+
 //////////////////////////////////////////////// reaction - diffusion ///////////////
 
-PImage turing2 (PImage img, boolean updateMapImg) {
-surface.setTitle ("TexTuring - computing ..." );  
-float time = millis();
-int left, right, up, down, W = img.width, H = img.height;  float uvv, u, v;
-float diffU, diffV, F, K; 
-int[][] offsetW = new int[W][2], offsetH = new int[H][2];
-float[][]  U = new float[W][H],  V = new float[W][H];
-float[][] dU = new float[W][H], dV = new float[W][H];
-float lapU, lapV;
+PImage algoReacionDiffusion (PImage img, boolean updateMapImg) {
+  surface.setTitle ("TexTuring - computing ..." );  
+  float time = millis();
+  int left, right, up, down, W = img.width, H = img.height;  float uvv, u, v;
+  float diffU, diffV, F, K; 
+  int[][] offsetW = new int[W][2], offsetH = new int[H][2];
+  float[][]  U = new float[W][H],  V = new float[W][H];
+  float[][] dU = new float[W][H], dV = new float[W][H];
+  float lapU, lapV;
 
     //  INITIALISATION
 
@@ -74,12 +89,12 @@ float lapU, lapV;
         //up    = offsetH[j][0]; down  = offsetH[j][1];
 
         uvv = u*v*v;
-        dU[i][j] = fkuv[i][j][2]*(U[offsetW[i][0]][j]+U[offsetW[i][1]][j]+U[i][offsetH[j][0]]+U[i][offsetH[j][1]] -4*u) - uvv + F*(1 - u);
-        dV[i][j] = fkuv[i][j][3]*(V[offsetW[i][0]][j]+V[offsetW[i][1]][j]+V[i][offsetH[j][0]]+V[i][offsetH[j][1]] -4*v) + uvv - (K+F)*v;
-      }
+        dU[i][j] = fkuv[i][j][2]*(U[offsetW[i][0]][j]+U[offsetW[i][1]][j]+U[i][offsetH[j][0]]+U[i][offsetH[j][1]] -4*u) - u*v*v + F*(1 - u);
+        dV[i][j] = fkuv[i][j][3]*(V[offsetW[i][0]][j]+V[offsetW[i][1]][j]+V[i][offsetH[j][0]]+V[i][offsetH[j][1]] -4*v) + u*v*v - (K+F)*v;
+/*      } ça n'a pas l'air de modifier le résultat
     }
     for (int i = 0; i < W; ++i) {
-      for (int j = 0; j < H; ++j) {
+      for (int j = 0; j < H; ++j) {*/
         U[i][j] += dU[i][j] * 1.38 ;
         V[i][j] += dV[i][j] * 0.63 ;
       }

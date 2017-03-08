@@ -23,13 +23,11 @@ class GuiElement {
     if (name=="diffusion") ref = 3 ;
   }
 
-  boolean isOver() {
-    return coords.isOver(mouseX, mouseY);
-  }
+  boolean isOver() { return coords.isOver(mouseX, mouseY); }
 
   void update() {}
   //callbacks for injecting events
-  void mouved() { update(); }
+  void moved() { update();}
   void pressed() {}
   void released() {}
   void dragged() {}
@@ -169,6 +167,7 @@ class Slider extends GuiElement {
   }
   void released (){ 
     if (press) updateDiSliderImage = true;
+    if (press) gui.elements.get(9).update();
     press = false;  
   }
   void dragged () {
@@ -227,12 +226,12 @@ class ViewPort extends GuiElement {
     viewZone.size.y = coords.size.y*zoom ;
     synchroScroll = true ;
   }
+  void moved() {}
   void dragged() {
     if ( isOver() || synchroScroll ) {
       synchroScroll = false ;
       viewZone.pos.x = constrain( viewZone.pos.x+pmouseX-mouseX, 0, (src.width -viewZone.size.x > 0) ? src.width -viewZone.size.x : 0 ) ;
       viewZone.pos.y = constrain( viewZone.pos.y+pmouseY-mouseY, 0, (src.height-viewZone.size.y > 0) ? src.height-viewZone.size.y : 0 ) ;
-      
       updateView();
       viewing = true ;
     }
@@ -240,8 +239,8 @@ class ViewPort extends GuiElement {
 
   void renderView(){  // render all the viewPort
     updateView();
-    viewImg = render(viewImg, (int)coords.size.x );
-    //viewImg.resize(viewImg.width/3,viewImg.height/3);
+    viewImg = render(viewImg, (int)coords.size.x*3 );
+    viewImg.resize(viewImg.width/3,viewImg.height/3);
     gui.message("Last render in "+ lastRenderTime + " sec");
 
     image(viewImg, coords.pos.x, coords.pos.y );
@@ -260,7 +259,6 @@ class ViewPort extends GuiElement {
     fill(bg); drawRect(coords); // background
     
     image(viewImg, coords.pos.x, coords.pos.y, coords.size.x, coords.size.y ); // display original image 
-    println("draw img " + dropState);
 
     if( dropState ) { 
       fill( colorActive,100 ); 
@@ -295,10 +293,8 @@ class ViewPort extends GuiElement {
     
     //if (myThread.getImg()!=null) renderMin = myThread.getImg();
 
-    if ( !isRender )
+    if ( !isRender ) 
       image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); 
-
-    if (isOver() && mousePressed) { cursor(MOVE); }else if(isOver()) { cursor(CROSS); }else{ cursor(ARROW); }
   }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -388,6 +384,7 @@ class BiSlider extends GuiElement {
   void released (){ 
     if ( zone!=0 ) {
       updateDiSliderImage = true ;
+      gui.elements.get(9).update();
     }
     zone = 0;  
   }
@@ -438,7 +435,7 @@ class BiSlider extends GuiElement {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-class DiSlider extends GuiElement { 
+class DiSlider extends GuiElement { // slider 2D
   Rect handle[] = new Rect[2];
   float pos1, pos2, pos3, pos11, pos22, pos33, zone ; 
   PImage mapImg ; 
@@ -489,11 +486,10 @@ class DiSlider extends GuiElement {
     float b5 = s-params.b[1]; float w5 = s-params.w[1];  // invert 0->200 to 200->0
     
     if ( updateDiSliderImage ) {
-      mapImg.resize(100,100) ;
-      mapImg = turing2(mapImg, true); 
+      mapImg.resize((int)s-20/2,(int)s-20/2) ;
+      mapImg = algoReacionDiffusion(mapImg, true); 
       updateDiSliderImage = false;
-      BufferedImage scaledImg = Scalr.resize( (BufferedImage)mapImg.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, int(s-20) );  // load PImage to bufferImage 
-      mapImg = new PImage(scaledImg);
+      mapImg.resize( int(s-20), 0 );
       if (threshold) mapImg.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
     }
 
@@ -502,13 +498,12 @@ class DiSlider extends GuiElement {
       fontColor(); text(name, -50 , 10); 
       image(mapImg, 0,20,s-20,s-20);
       fill(240,180); rect(0,20,s-20,s-20);
-      strokeWeight(5);
-        stroke(C[12]); if (handle[0].isOver() || coords.isOver() && !handle[1].isOver() ) stroke(colorActive); ellipse(params.b[0], b5, 15, 15);  // top
-        stroke(C[12]); if (handle[1].isOver() || coords.isOver() && !handle[0].isOver() ) stroke(colorActive); ellipse(params.w[0], w5, 15, 15);  // bottom
+      strokeWeight( (handle[0].isOver())? 8:5 ); stroke( (handle[0].isOver() || isOver()&&!handle[1].isOver() )? colorActive :C[12] ); ellipse(params.b[0], b5, 15, 15);  // top
+      strokeWeight( (handle[1].isOver())? 8:5 ); stroke( (handle[1].isOver() || isOver()&&!handle[0].isOver() )? colorActive :C[12] ); ellipse(params.w[0], w5, 15, 15);  // bottom
       strokeWeight(1); noStroke();
-      for (int i = 0; i<=20; i++){
-        fill(255/20*i);
-        ellipse(params.b[0]+i*(params.w[0]-params.b[0])/20, b5+i*(w5-b5)/20, 10,10);
+      for (int i = 0; i<=35; i++){
+        fill(255/35*i);
+        ellipse(params.b[0]+i*(params.w[0]-params.b[0])/35, b5+i*(w5-b5)/35, 10,10);
       }
     popMatrix();
     updateSlider(0, x, y+s+5, s-10);

@@ -44,7 +44,7 @@ class GuiWindow {
     guiRect.size.x = 22; elements.add(new CheckBox(new Rect(guiRect), "check threshold"));  
 
     guiRect = new Rect( 200+50, guiRect.pos.y, 250, 250 );
-    guiRect.pos.y += 50; elements.add(new DiSlider(new Rect(guiRect), "From Growing bay to shades of grey"));
+    guiRect.pos.y += 50; elements.add(2,new DiSlider(new Rect(guiRect), "From Growing bay to shades of grey"));
     
     guiRect.size.x = guiWidth+10; guiRect.size.y = 60; guiRect.pos.x= 200;
     guiRect.pos.y += 300; elements.add(new BiSlider(new Rect(guiRect), "reaction","Feed rate"));
@@ -55,13 +55,15 @@ class GuiWindow {
     }
     elements.get(7).flag = "beginAnimation";
     elements.get(8).flag = "endAnimation";
+    // debug : list elements position
+    //for (int i = 0; i < gui.elements.size(); ++i) println(i + "---" + gui.elements.get(i) );  
   }
 
-  void injectMouseDragged()  { for (GuiElement elem : elements) { elem.dragged(); } }
-  void injectMouseMoved()    { for (GuiElement elem : elements) { elem.mouved();  } } 
-  void injectMouseReleased() { for (GuiElement elem : elements) { elem.released(); } }
-  void injectMousePressed()  { for (GuiElement elem : elements) { if ( elem.isOver() ) { elem.pressed(); return; } } }
-  void injectMouseWheel(int scroll){for (GuiElement elem : elements) { if( elem.isOver() ) { elem.scroll(scroll); return; } } }
+  void injectMouseDragged()        { for (GuiElement elem : elements) { if(elem.isOver())   elem.dragged(); } }
+  void injectMouseMoved()          { for (GuiElement elem : elements) {                     elem.moved();  } } 
+  void injectMouseReleased()       { for (GuiElement elem : elements) { if(elem.isOver())    elem.released(); } }
+  void injectMousePressed()        { for (GuiElement elem : elements) { if( elem.isOver() ) { elem.pressed(); return; } } }
+  void injectMouseWheel(int scroll){ for (GuiElement elem : elements) { if( elem.isOver() ) { elem.scroll(scroll); return; } } }
 
   void update(){     
     updateDiSliderImage = true ;
