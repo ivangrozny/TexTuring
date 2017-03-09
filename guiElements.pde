@@ -487,7 +487,7 @@ class DiSlider extends GuiElement { // slider 2D
     
     if ( updateDiSliderImage ) {
       mapImg.resize((int)s-20/2,(int)s-20/2) ;
-      mapImg = algoReacionDiffusion(mapImg, true); 
+      mapImg = algoReacionDiffusion(mapImg, "renderMapImg"); 
       updateDiSliderImage = false;
       mapImg.resize( int(s-20), 0 );
       if (threshold) mapImg.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
