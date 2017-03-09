@@ -1,4 +1,5 @@
 PImage render(PImage imageIn, int widthOut ){
+
   PImage image = imageIn.get();
   int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
 
@@ -23,12 +24,14 @@ float[] MAXI = { 0.15, 0.08, 0.11, 0.05 };  // F, K, diffU, diffV
 float NOISE_ZOOM = 0.20;
 
 PImage algoReacionDiffusion (PImage img, String state) {
+
   if ( state.equals("renderMapImg") ) surface.setTitle ("TexTuring - Evolution ..." );  
   img.loadPixels();
   int W = img.width, H = img.height;  
   int[][] offsetW = new int[W][2], offsetH = new int[H][2];
   float[][]  U = new float[W][H],  V = new float[W][H];
   float time = millis();
+
 
   //  INITIALISATION
   for (int i = 0; i < W; ++i) {
@@ -48,22 +51,24 @@ PImage algoReacionDiffusion (PImage img, String state) {
     }
   }  
   
+
+
   float[][][] fkuv = new float[W][H][4];  // init param grid
 
   for (int i = 0; i<W; ++i){
     for (int j = 0; j<H; ++j){
 
       if ( state.equals("renderMapImg") ) {
-        fkuv[i][j][0] = map( i, 0, H, MINI[0], MAXI[0] );
-        fkuv[i][j][1] = map( j, 0, W, MAXI[1], MINI[0] );  
-        fkuv[i][j][2] = map(params.b[2],0,200,0,MAXI[2]);
-        fkuv[i][j][3] = map(params.w[3],0,200,0,MAXI[3]);
+        fkuv[i][j][0] = ( map( i, 0, H, MINI[0], MAXI[0] )  );
+        fkuv[i][j][1] = ( map( j, 0, W, MAXI[1], MINI[0] )  );
+        fkuv[i][j][2] = ( map(params.b[2],0,200,0,MAXI[2] ) );
+        fkuv[i][j][3] = ( map(params.w[3],0,200,0,MAXI[3] ) );
 
       } else {
         for (int k = 0; k<4; ++k){
-          fkuv[i][j][k] = map( brightness(img.pixels[j*W+i]),0,255, 
+          fkuv[i][j][k] = (  map( brightness(img.pixels[j*W+i]),0,255, 
             map(params.b[k], 0, 200, MINI[k], MAXI[k]), 
-            map(params.w[k], 0, 200, MINI[k], MAXI[k]));
+            map(params.w[k], 0, 200, MINI[k], MAXI[k])) );
         } 
       }
 
@@ -76,33 +81,30 @@ PImage algoReacionDiffusion (PImage img, String state) {
   offsetW[0][0] = 0; offsetW[W-1][1] = W-1;
   offsetH[0][0] = 0; offsetH[H-1][1] = H-1;
 
+
   for (int n = 0; n< params.o[0] ; ++n){ 
     for (int i = 0; i < W; ++i) {
       for (int j = 0; j < H; ++j) {
 
         F = fkuv[i][j][0] ;
-        K = fkuv[i][j][1] ;
-
         u = U[i][j];  
         v = V[i][j]; 
-        //left  = offsetW[i][0]; right = offsetW[i][1];
-        //up    = offsetH[j][0]; down  = offsetH[j][1];
         uvv = u*v*v;
         lapU = U[offsetW[i][0]][j] + U[offsetW[i][1]][j] + U[i][offsetH[j][0]] + U[i][offsetH[j][1]] -4*u;
         lapV = V[offsetW[i][0]][j] + V[offsetW[i][1]][j] + V[i][offsetH[j][0]] + V[i][offsetH[j][1]] -4*v;
 
         U[i][j] += ( fkuv[i][j][2]*lapU - uvv + F*(1 - u) ) * 1.38 ;
-        V[i][j] += ( fkuv[i][j][3]*lapV + uvv - (K+F)*v   ) * 0.63 ;
+        V[i][j] += ( fkuv[i][j][3]*lapV + uvv - (fkuv[i][j][1]+F)*v   ) * 0.63 ;
       } 
     }
-    if( state.equals("render") && n%(params.o[0]/30) == 0 ) 
-      surface.setTitle ("TexTuring - Evolution [ "+int( (100*n)/(params.o[0]+1))+"% ]" );
+    if( state.equals("render") && n%(params.o[0]/30) == 0 )  surface.setTitle ("TexTuring - Evolution [ "+int( (100*n)/(params.o[0]+1))+"% ]" );
   }
 
     int pShift;
     for (int i = 0; i < W; i++) {
       for (int j = 0; j < H; j++) {
-        pShift = int( U[i][j]*255 ) ;
+        pShift = int( U[i][j]*255) ;
+          //println("U[i][j]: "+U[i][j]);
         img.pixels[j*W+i] = 0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
       }
     }
@@ -110,6 +112,9 @@ PImage algoReacionDiffusion (PImage img, String state) {
 
   lastRenderTime = ( millis()-time ) /1000 ; 
   surface.setTitle ( "TexTuring - 1.0" );
+  
+  println("render, "+state+" - width : "+img.width+" - time : "+lastRenderTime);
 
   return img;
+
 }

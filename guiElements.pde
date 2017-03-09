@@ -239,18 +239,26 @@ class ViewPort extends GuiElement {
 
   void renderView(){  // render all the viewPort
     updateView();
+    
     viewImg = render(viewImg, (int)coords.size.x*3 );
     viewImg.resize(viewImg.width/3,viewImg.height/3);
+
     gui.message("Last render in "+ lastRenderTime + " sec");
 
-    image(viewImg, coords.pos.x, coords.pos.y );
+    image(viewImg, coords.pos.x, coords.pos.y,
+      (viewZone.pos.x+viewZone.size.x < src.width )? (int)coords.size.x : src.width /zoom,
+      (viewZone.pos.y+viewZone.size.y < src.height)? (int)coords.size.y : src.height/zoom   
+    );
 
     isRender = true ;
     viewing = false ;
   }
   
   void updateView(){ // setup viewImg as the viewZone from src
-    viewImg = createImage( (int)viewZone.size.x, (int)viewZone.size.y, ALPHA );
+    viewImg = createImage( 
+      (viewZone.pos.x+viewZone.size.x < src.width )? (int)viewZone.size.x : int( src.width  ) ,
+      (viewZone.pos.y+viewZone.size.y < src.height)? (int)viewZone.size.y : int( src.height ) ,
+    ALPHA );
     viewImg.set(-(int)viewZone.pos.x, -(int)viewZone.pos.y, src );
     isRender = false ;
   }
@@ -258,7 +266,10 @@ class ViewPort extends GuiElement {
   void update(){
     fill(bg); drawRect(coords); // background
     
-    image(viewImg, coords.pos.x, coords.pos.y, coords.size.x, coords.size.y ); // display original image 
+    image(viewImg, coords.pos.x, coords.pos.y,
+      (viewZone.pos.x+viewZone.size.x < src.width )? (int)coords.size.x : src.width /zoom,
+      (viewZone.pos.y+viewZone.size.y < src.height)? (int)coords.size.y : src.height/zoom   
+    ); // display original image 
 
     if( dropState ) { 
       fill( colorActive,100 ); 
@@ -267,7 +278,7 @@ class ViewPort extends GuiElement {
     }
 
     // render renderZone
-    if( viewing ){    
+    if( viewing ){ 
       viewing = false ;
       if( isRender ) updateView();
       // set renderZone size
@@ -287,7 +298,7 @@ class ViewPort extends GuiElement {
         myThread.sizeOut = int( centerSize/zoom ) ; myThread.srcMin = srcMin ;
         myThread.start(); 
 */
-      renderMin = render(srcMin, int( centerSize/zoom )*3 );
+      renderMin = render(srcMin, round( centerSize/zoom )*3 );
       renderMin.resize(renderMin.width/3,renderMin.height/3);
     }
     
@@ -319,7 +330,8 @@ class Snap extends GuiElement {
 
       snap = loadImage("gradient.png");
       snap.resize((int)coords.size.x,(int)coords.size.y);
-      snap = render(snap,(int)coords.size.x);
+      snap = render(snap,(int)coords.size.x*3);
+      snap.resize((int)coords.size.x,0);
 
       fill(C[25]); drawRect(coords);
       update();
@@ -344,8 +356,8 @@ class Snap extends GuiElement {
     } else {
       if ( !isOver() ) {
         fill(230); drawRect(coords);
-        tint( 255, 60 );  
-        image(snap, coords.pos.x, coords.pos.y); noTint();  
+        tint( 255, 80 );  
+        image(snap, coords.pos.x, coords.pos.y, snap.width-5, snap.height); noTint();  
       } else {
         image(snap, coords.pos.x, coords.pos.y);
         fill( delete.isOver() ? C[12] : C[17] );
@@ -486,7 +498,8 @@ class DiSlider extends GuiElement { // slider 2D
     float b5 = s-params.b[1]; float w5 = s-params.w[1];  // invert 0->200 to 200->0
     
     if ( updateDiSliderImage ) {
-      mapImg.resize((int)s-20/2,(int)s-20/2) ;
+      mapImg.resize( int((s-20)/2.5),int((s-20)/2.5) ) ;
+      // threader !!!  vvv
       mapImg = algoReacionDiffusion(mapImg, "renderMapImg"); 
       updateDiSliderImage = false;
       mapImg.resize( int(s-20), 0 );
