@@ -97,7 +97,8 @@ PImage algoReacionDiffusion (PImage img, String state) {
         V[i][j] += ( fkuv[i][j][3]*lapV + uvv - (fkuv[i][j][1]+F)*v   ) * 0.63 ;
       } 
     }
-    if( state.equals("render") && n%(params.o[0]/30) == 0 )  surface.setTitle ("TexTuring - Evolution [ "+int( (100*n)/(params.o[0]+1))+"% ]" );
+    if( state.equals("render") && n%((params.o[0])/30+1) == 0 )  
+      surface.setTitle ("TexTuring - Evolution [ "+int( (100*n)/(params.o[0]+1) )+"% ]" );
   }
 
     int pShift;
@@ -113,7 +114,7 @@ PImage algoReacionDiffusion (PImage img, String state) {
   lastRenderTime = ( millis()-time ) /1000 ; 
   surface.setTitle ( "TexTuring - 1.0" );
   
-  println("render, "+state+" - width : "+img.width+" - time : "+lastRenderTime);
+  println("render, "+state+" - width : "+img.width+" - time : "+lastRenderTime );
 
   return img;
 

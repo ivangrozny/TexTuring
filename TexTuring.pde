@@ -20,14 +20,9 @@ int listenerWidth, listenerHeight;
 
 //MyThread myThread;
 
-void settings() {
-  size( int(displayWidth*0.8), int(displayHeight*0.8) );
-}
-
+void settings() { size( int(displayWidth*0.8), int(displayHeight*0.8) ); }
 void setup() {
   listenerHeight=height; listenerWidth=width;
-  surface.setResizable(true);
-  surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
   frameRate(30);
 
   //myThread = new MyThread();
@@ -36,31 +31,35 @@ void setup() {
   gui.setupGui();
   fileSelected( new File(dataPath("launch.jpg")) );           
   params.loadFile( new File(dataPath("default.texturing")) );
-  initDrop();
 }
 
 void draw() {
+	resizeListener();
   fill( (frameCount%2==0)?100:200 ); rect(10,1000,500-frameCount*2%400,30);  // debug mode
 
   if ( viewing )       gui.elements.get(0).update() ;
   if ( synchroScroll ) gui.elements.get(0).dragged();
-  if ( pmouseX!=mouseX || pmouseY!=mouseY)                  gui.injectMouseMoved (); // mousMoved listener
-  if ((pmouseX!=mouseX || pmouseY!=mouseY) && mousePressed) gui.injectMouseDragged (); // mousDragged listener
-
+  gui.elements.get(9).update();
+}
+void mousePressed (){ gui.injectMousePressed (); }
+void mouseReleased(){ gui.injectMouseReleased(); }
+void mouseMoved(){ gui.injectMouseMoved (); if (gui.elements.get(0).isOver() ){ cursor(MOVE); }else{ cursor(ARROW); } }
+void mouseDragged(){ gui.injectMouseDragged (); }
+void mouseWheel(processing.event.MouseEvent event) { gui.injectMouseWheel(event.getCount()); }
+void keyReleased(){ control = false; }
+void resizeListener(){
   if (listenerWidth!=width || listenerHeight!=height) {  // resize listener
+  	if( width<800 ) surface.setSize(800,height);
+  	if( height<700 ) surface.setSize(width,700);
     listenerWidth=width; listenerHeight=height; 
     gui.resize(); 
     gui.update();
   }
 }
-void mousePressed (){ gui.injectMousePressed (); }
-void mouseReleased(){ gui.injectMouseReleased(); }
-void mouseMoved(){ if (gui.elements.get(0).isOver() ){ cursor(MOVE); }else{ cursor(ARROW); } }
-void mouseWheel(processing.event.MouseEvent event) { gui.injectMouseWheel(event.getCount()); }
-void keyReleased(){ control = false; }
+
 
 void exportImage() {
-  String[] extention = { ".png", ".gif animation", ".pdf specimen", ".svg [experimental]" };
+  String[] extention = { ".png - image", ".gif - animation", ".pdf - specimen", ".svg - vectors" };
   JTextField nameField = new JTextField(12); nameField.setText( "TexTuring-"+int(random(9999)) );
   JTextField sizeField = new JTextField(5); sizeField.setText( ""+(int) params.o[2]*src.width/100 );
   JComboBox extField = new JComboBox( new DefaultComboBoxModel(extention) );
@@ -85,12 +84,16 @@ void exportImage() {
     String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() ;  
     println("savedPath: "+ path + "["+ extField.getSelectedItem() +"]" );
 
-
     if ( extention[0].equals(extField.getSelectedItem()) ) { 
 
       if( gui.state == "multiFiles" ){
+        if( gui.elements.get(7).isSnaped() )
+          params.loadParameters( gui.elements.get(7).savedParams );
+
         for ( int i=0; i < gui.listOfFiles.size(); ++i ) {
           src = loadImage( gui.listOfFiles.get(i).getAbsolutePath() );
+          if( gui.elements.get(8).isSnaped() ) 
+            params.nextFrameAnimation( gui.listOfFiles.size(), gui.elements.get(8).savedParams );
           saveImage( render(src, int(sizeField.getText()) ), 
             pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() ); 
         }
@@ -107,7 +110,7 @@ void exportImage() {
       JTextField nbrFrameField = new JTextField(4); nbrFrameField.setText( "10" );
       p3.add(nbrFrameField); 
       p3.add(new JLabel("<html> frames from <i>begining sample</i> to <i>ending sample</i></html>"));
-      JTextField durationField = new JTextField(4); durationField.setText( "0.1" );
+      JTextField durationField = new JTextField(4); durationField.setText( "0.06" );
       p4.add(durationField);
       p4.add(new JLabel("<html> seconds per frame</html>"));
       JPanel outer2 = new JPanel(new BorderLayout());
@@ -121,13 +124,16 @@ void exportImage() {
         gifExport.setRepeat(0); // infinite
         gifExport.setQuality(10); // default 10
 
-        params.loadParameters( gui.elements.get(7).savedParams );
+        if( gui.elements.get(7).isSnaped() )
+          params.loadParameters( gui.elements.get(7).savedParams );
 
         // render every frames
         for (int i=0; i < int(nbrFrameField.getText()); ++i) {
           
+          PImage gifImg =  render(src, int(sizeField.getText())*3 ) ;
+          gifImg.resize( int(sizeField.getText()),0);
+          gifExport.addFrame( gifImg );
           gifExport.setDelay( int( float( durationField.getText() )*1000 ) ); // convert sec to ms 
-          gifExport.addFrame( render(src, int(sizeField.getText())) );
           params.nextFrameAnimation( int( nbrFrameField.getText() ), gui.elements.get(8).savedParams );
         }
       

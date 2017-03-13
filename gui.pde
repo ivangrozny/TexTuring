@@ -9,7 +9,8 @@ class GuiWindow {
 
   void setupGui(){  
     try { UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName()); } catch (Exception e) { e.printStackTrace(); }  //  platform specific UI
-  
+    surface.setLocation(int(displayWidth*0.1), int(displayHeight*0.1));
+    surface.setResizable(true); 
     surface.setIcon( loadImage("logo.png") );
     colorMode(HSB); for (int i=0;i<=25;i++) C[i] = color(123,270-i*13,100+i*5); // create UI color shades
     background( bg );
@@ -65,12 +66,12 @@ class GuiWindow {
   void injectMousePressed()        { for (GuiElement elem : elements) { if( elem.isOver() ) { elem.pressed(); return; } } }
   void injectMouseWheel(int scroll){ for (GuiElement elem : elements) { if( elem.isOver() ) { elem.scroll(scroll); return; } } }
 
-  void update(){     
-    updateDiSliderImage = true ;
+  void update(){   
+    initDrop();  
+    gui.elements.get(9).updateMapImg();
     viewing = true ;
-    for (GuiElement elem : elements) {
-      elem.update(); 
-    }  
+    for (GuiElement elem : elements)    
+      elem.update();   
     fill(colorFont); text("Samples", d, d+100 -10 );
   }
   void resize(){ for (GuiElement elem:elements) elem.resize(); }

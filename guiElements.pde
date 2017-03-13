@@ -2,6 +2,7 @@ class GuiElement {
   Rect coords;
   String name;
   int ref;
+  PImage mapImg ;
   boolean isOver = false;
   boolean isVisible = true;
   boolean dropState = false;
@@ -39,6 +40,8 @@ class GuiElement {
   void renderView() {}
   void scroll(int scroll) {}
   void resize() {}
+  boolean isSnaped(){return false;}
+  void updateMapImg(){}
   void message(String msg) {}
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,7 +124,7 @@ class CheckBox extends GuiElement {
   void pressed() {
     buttonPressed( this );
     b = !b ;
-    updateDiSliderImage = true;
+    gui.elements.get(9).updateMapImg();
     gui.injectMouseMoved();
   }
 }
@@ -166,14 +169,14 @@ class Slider extends GuiElement {
     press = true; 
   }
   void released (){ 
-    if (press) updateDiSliderImage = true;
-    if (press) gui.elements.get(9).update();
+    if (press) gui.elements.get(9).updateMapImg();
     press = false;  
   }
   void dragged () {
     if ( press ) {
       int off = (control) ? 20 : 1 ;
-      params.o[ref] = (int)constrain(  params.o[ref] + map(mouseX-pmouseX,0,coords.size.x,0,range) , 1, range);
+      params.o[ref] = (int)constrain( params.o[ref] + map(mouseX-pmouseX,0,coords.size.x,0,range)/off , 0, range);
+      if( params.o[ref]==0 ) params.o[ref] = 1; 
       update(); 
       viewing = true; 
     }
@@ -209,7 +212,7 @@ class ViewPort extends GuiElement {
   float centerRectX, centerRectY, centerSize ;
   ViewPort (Rect _coords) { 
     super(_coords, "preview");
-    viewZone   = new Rect(0,0,coords.size.x, coords.size.y); // from top left of input src
+    viewZone   = new Rect(0,0,coords.size.x, coords.size.y); // from top left of input src-img
     renderZone = new Rect(coords.pos.x, coords.pos.y, 100, 100); 
     srcMin  = createImage(100, 100, ALPHA);
     viewImg = createImage(int(coords.size.x), int(coords.size.y), ALPHA);
@@ -323,8 +326,8 @@ class Snap extends GuiElement {
     update();
 
   }
+  boolean isSnaped(){ if( snap == null ){ return false; }else{ return true; } }
   void pressed (){
-
     if( snap == null ) {  // save snap
       savedParams.loadParameters( params );
 
@@ -395,8 +398,7 @@ class BiSlider extends GuiElement {
   }
   void released (){ 
     if ( zone!=0 ) {
-      updateDiSliderImage = true ;
-      gui.elements.get(9).update();
+      gui.elements.get(9).updateMapImg();
     }
     zone = 0;  
   }
@@ -450,16 +452,17 @@ class BiSlider extends GuiElement {
 class DiSlider extends GuiElement { // slider 2D
   Rect handle[] = new Rect[2];
   float pos1, pos2, pos3, pos11, pos22, pos33, zone ; 
-  PImage mapImg ; 
+  float s, sh, x, y; 
   PImage grad, gradInvert;
 
   DiSlider(Rect _coords, String _name){ 
     super(_coords, _name);
+    x = coords.pos.x; y = coords.pos.y; s = coords.size.x; sh = coords.size.y;  // layout helpers
     mapImg = createImage(int(10), int(10), ARGB);
     grad = loadImage("gradient.png"); gradInvert = loadImage("gradInvert.png");
-    updateDiSliderImage = true;
-    update();
+    updateMapImg();
   }
+  void moved(){}
   void pressed (){
     if ( coords.isOver() )    { zone=3; pos1=mouseX; pos11=mouseY; pos2=mouseX; pos22=mouseY; } // center
     if ( handle[0].isOver() ) { zone=1; pos1=mouseX; pos11=mouseY; } // top
@@ -489,22 +492,18 @@ class DiSlider extends GuiElement { // slider 2D
     }
   }
 
-  void update () {
-    float x=coords.pos.x, y=coords.pos.y, s=coords.size.x, sh=coords.size.y ;
-
-    handle[0] = new Rect( x+params.b[0]-10, y+map(params.b[1],0,s,s,0)-10, 20, 20 );
-    handle[1] = new Rect( x+  params.w[0]-10, y+map(  params.w[1],0,s,s,0)-10, 20, 20 );
-
-    float b5 = s-params.b[1]; float w5 = s-params.w[1];  // invert 0->200 to 200->0
-    
-    if ( updateDiSliderImage ) {
-      mapImg.resize( int((s-20)/2.5),int((s-20)/2.5) ) ;
-      // threader !!!  vvv
-      mapImg = algoReacionDiffusion(mapImg, "renderMapImg"); 
-      updateDiSliderImage = false;
-      mapImg.resize( int(s-20), 0 );
-      if (threshold) mapImg.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+  void updateMapImg(){ 
+    if (mapImg.width>0){
+      mapImg.filter(BLUR, 2); 
+      thread("renderMapImg"); 
     }
+  }
+
+  void update () {
+    float b5 = s-params.b[1]; 
+    float w5 = s-params.w[1];  // invert 0->200 to 200->0
+    handle[0] = new Rect( x+params.b[0]-10, y + map(params.b[1],0,s,s,0)-10, 20, 20 );
+    handle[1] = new Rect( x+params.w[0]-10, y + map(params.w[1],0,s,s,0)-10, 20, 20 );
 
     pushMatrix(); translate(x, y);
       fill(bg); rect(-40,-20,s+60,s+60 ); //bg
@@ -556,3 +555,17 @@ class DiSlider extends GuiElement { // slider 2D
     popMatrix(); textAlign(LEFT);
   } 
 }
+
+  void renderMapImg(){
+    PImage mapImg = gui.elements.get(9).mapImg ;
+    float s = gui.elements.get(9).coords.size.x ;
+
+    mapImg.resize( int((s-20)/1.8),int((s-20)/1.8) ) ;
+    mapImg = algoReacionDiffusion(mapImg, "renderMapImg"); 
+    mapImg.resize( int(s-20)*3, 0 );
+    if (threshold) mapImg.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+    mapImg.resize( int(s-20), 0 );
+
+    gui.elements.get(9).mapImg = mapImg;
+    
+  }
