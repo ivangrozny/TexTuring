@@ -1,21 +1,24 @@
-PImage render(PImage imageIn, int widthOut ){
+PImage render(PImage img, int widthOut, String state ){
 
-  PImage image = imageIn.get();
-  int imgWidth = int( params.o[2]*image.width/100 ); if (imgWidth<5) imgWidth = 5;
+  int imgWidth = int( params.o[2]*img.width/100 ); if (imgWidth<5) imgWidth = 5;
 
-  image.resize(imgWidth, 0 );
-  algoReacionDiffusion(image, "render");
+  img.resize(imgWidth, 0 );
+  algoReacionDiffusion(img, state);
 
-  //image.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
-  BufferedImage scaledImg = Scalr.resize( (BufferedImage)image.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);  // load PImage to bufferImage 
-  image = new PImage(scaledImg);
+  if ( state.equals("export") || state.equals("animate") ) {
+    BufferedImage scaledImg = Scalr.resize( (BufferedImage)img.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);  // load PImage to bufferImage 
+    img = new PImage(scaledImg);
+  }else{
+    img.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
+  }
 
-  if (threshold) image.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
-  return image ;
+  thresholdImg(img);
+  return img ;
 }
-
+void thresholdImg(PImage img){
+  if (threshold) img.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+}
 //////////////////////////////////////////////// reaction - diffusion ///////////////
-
 float uvv, u, v;
 float diffU, diffV, F, K; 
 float lapU, lapV;
@@ -25,13 +28,11 @@ float NOISE_ZOOM = 0.20;
 
 PImage algoReacionDiffusion (PImage img, String state) {
 
-  if ( state.equals("renderMapImg") ) surface.setTitle ("TexTuring - Evolution ..." );  
-  img.loadPixels();
+  if ( state.equals("export") ) surface.setTitle ("TexTuring - Evolution ..." );  
   int W = img.width, H = img.height;  
   int[][] offsetW = new int[W][2], offsetH = new int[H][2];
   float[][]  U = new float[W][H],  V = new float[W][H];
   float time = millis();
-
 
   //  INITIALISATION
   for (int i = 0; i < W; ++i) {
@@ -50,8 +51,6 @@ PImage algoReacionDiffusion (PImage img, String state) {
       }
     }
   }  
-  
-
 
   float[][][] fkuv = new float[W][H][4];  // init param grid
 
@@ -81,7 +80,6 @@ PImage algoReacionDiffusion (PImage img, String state) {
   offsetW[0][0] = 0; offsetW[W-1][1] = W-1;
   offsetH[0][0] = 0; offsetH[H-1][1] = H-1;
 
-
   for (int n = 0; n< params.o[0] ; ++n){ 
     for (int i = 0; i < W; ++i) {
       for (int j = 0; j < H; ++j) {
@@ -97,25 +95,28 @@ PImage algoReacionDiffusion (PImage img, String state) {
         V[i][j] += ( fkuv[i][j][3]*lapV + uvv - (fkuv[i][j][1]+F)*v   ) * 0.63 ;
       } 
     }
-    if( state.equals("render") && n%((params.o[0])/30+1) == 0 )  
+    if( state.equals("export") && state.equals("animate") && n%((params.o[0])/30+1) == 0 )  
       surface.setTitle ("TexTuring - Evolution [ "+int( (100*n)/(params.o[0]+1) )+"% ]" );
-  }
 
-    int pShift;
-    for (int i = 0; i < W; i++) {
-      for (int j = 0; j < H; j++) {
-        pShift = int( U[i][j]*255) ;
-          //println("U[i][j]: "+U[i][j]);
-        img.pixels[j*W+i] = 0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
-      }
+    if( state.equals("animate") && n>2 && n%(20) == 3 ){
+      ((ViewPort)gui.elements.get(0)).dataAnimation = U ;
+      updateViewImg = true;
     }
-  img.updatePixels();
+  }
+  writeImg(img, U);
 
   lastRenderTime = ( millis()-time ) /1000 ; 
-  surface.setTitle ( "TexTuring - 1.0" );
+  if( state.equals("export") && state.equals("animate") ) surface.setTitle ( "TexTuring - 1.0" );
   
-  println("render, "+state+" - width : "+img.width+" - time : "+lastRenderTime );
-
   return img;
+}
 
+void writeImg(PImage img, float[][] U){
+    int pShift;
+    for (int i = 0; i < img.width; i++) {
+      for (int j = 0; j < img.height; j++) {
+        pShift = int( U[i][j]*255) ;
+        img.pixels[j*img.width+i] = 0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
+      }
+    }
 }

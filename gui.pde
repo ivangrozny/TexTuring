@@ -60,11 +60,11 @@ class GuiWindow {
     //for (int i = 0; i < gui.elements.size(); ++i) println(i + "---" + gui.elements.get(i) );  
   }
 
-  void injectMouseDragged()        { for (GuiElement elem : elements) { if(elem.isOver())   elem.dragged(); } }
-  void injectMouseMoved()          { for (GuiElement elem : elements) {                     elem.moved();  } } 
-  void injectMouseReleased()       { for (GuiElement elem : elements) { if(elem.isOver())    elem.released(); } }
-  void injectMousePressed()        { for (GuiElement elem : elements) { if( elem.isOver() ) { elem.pressed(); return; } } }
-  void injectMouseWheel(int scroll){ for (GuiElement elem : elements) { if( elem.isOver() ) { elem.scroll(scroll); return; } } }
+  void injectMouseMoved()          { for (GuiElement elem : elements) {                      elem.moved();    } } 
+  void injectMouseDragged()        { for (GuiElement elem : elements) { if(elem.isOver())  { elem.dragged();      return; } } }
+  void injectMouseReleased()       { for (GuiElement elem : elements) { if(elem.isOver())  { elem.released();     return; } } }
+  void injectMousePressed()        { for (GuiElement elem : elements) { if(elem.isOver() ) { elem.pressed();      return; } } }
+  void injectMouseWheel(int scroll){ for (GuiElement elem : elements) { if(elem.isOver() ) { elem.scroll(scroll); return; } } }
 
   void update(){   
     initDrop();  

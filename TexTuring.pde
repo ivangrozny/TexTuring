@@ -5,7 +5,7 @@ import java.awt.image.BufferedImage;
 import processing.pdf.*;
 import drop.*; SDrop drop; MyDropListener dropListener;
 
-boolean control = false, live = true, updateDiSliderImage = false, viewing = false, threshold = true;
+boolean control = false, updateViewImg = false, viewing = false, threshold = true;
 boolean synchroScroll = false;
 PImage src ;
 int h,w, off, offX, offY, viewSize=100 ;
@@ -37,9 +37,12 @@ void draw() {
 	resizeListener();
   fill( (frameCount%2==0)?100:200 ); rect(10,1000,500-frameCount*2%400,30);  // debug mode
 
-  if ( viewing )       gui.elements.get(0).update() ;
-  if ( synchroScroll ) gui.elements.get(0).dragged();
   gui.elements.get(9).update();
+
+  if ( synchroScroll ) gui.elements.get(0).dragged();
+
+  if ( viewing || updateViewImg )  gui.elements.get(0).update() ;
+  if ( updateViewImg ) updateViewImg = false;
 }
 void mousePressed (){ gui.injectMousePressed (); }
 void mouseReleased(){ gui.injectMouseReleased(); }
@@ -56,7 +59,6 @@ void resizeListener(){
     gui.update();
   }
 }
-
 
 void exportImage() {
   String[] extention = { ".png - image", ".gif - animation", ".pdf - specimen", ".svg - vectors" };
@@ -94,11 +96,11 @@ void exportImage() {
           src = loadImage( gui.listOfFiles.get(i).getAbsolutePath() );
           if( gui.elements.get(8).isSnaped() ) 
             params.nextFrameAnimation( gui.listOfFiles.size(), gui.elements.get(8).savedParams );
-          saveImage( render(src, int(sizeField.getText()) ), 
+          saveImage( render(src, int(sizeField.getText()), "export"), 
             pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() ); 
         }
       } else {
-        saveImage( render(src, int(sizeField.getText()) ) , path + ".png" ); 
+        saveImage( render(src, int(sizeField.getText()), "export") , path + ".png" ); 
       }
     }
 
@@ -130,7 +132,7 @@ void exportImage() {
         // render every frames
         for (int i=0; i < int(nbrFrameField.getText()); ++i) {
           
-          PImage gifImg =  render(src, int(sizeField.getText())*3 ) ;
+          PImage gifImg =  render(src, int(sizeField.getText())*3, "export") ;
           gifImg.resize( int(sizeField.getText()),0);
           gifExport.addFrame( gifImg );
           gifExport.setDelay( int( float( durationField.getText() )*1000 ) ); // convert sec to ms 
@@ -146,7 +148,7 @@ void exportImage() {
       PGraphics pdf = createGraphics(3000, 4243, PDF, path + ".pdf");
       pdf.beginDraw();
       pdf.background(255);
-      pdf.image(render(src, 3000), 0, 150);
+      pdf.image(render(src, 3000, "export"), 0, 150);
       pdf.fill(0);
       pdf.textSize(36);
       
@@ -168,7 +170,7 @@ void exportImage() {
       pdf.endDraw();
     }
     if ( extention[3].equals(extField.getSelectedItem()) ) { 
-      svgConverter( render(src, int(params.o[2]*src.width/100)*2 ), 1, path + ".svg" );
+      svgConverter( render(src, int(params.o[2]*src.width/100)*2, "export"), 1, path + ".svg" );
     }
   }
 }

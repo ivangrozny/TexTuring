@@ -3,6 +3,9 @@ class GuiElement {
   String name;
   int ref;
   PImage mapImg ;
+  PImage viewImg ;
+  Rect viewZone ;
+  float zoom = 0.5240786 ;
   boolean isOver = false;
   boolean isVisible = true;
   boolean dropState = false;
@@ -36,7 +39,6 @@ class GuiElement {
   void drawRect( Rect r) {             rect(   r.pos.x, r.pos.y, r.size.x, r.size.y ); }
   void drawImage(PImage i, Rect r) {  image(i, r.pos.x, r.pos.y, r.size.x, r.size.y ); }
   void drawText( Rect r, String text){ text(text, coords.pos.x + 5, coords.pos.y ); }
-  PImage viewImg;
   void renderView() {}
   void scroll(int scroll) {}
   void resize() {}
@@ -202,25 +204,20 @@ class Slider extends GuiElement {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class ViewPort extends GuiElement {
-  Rect viewZone ;
   Rect renderZone ;
-  PImage viewImg ;
-  PImage srcMin ;
-  PImage renderMin = createImage(100,100,ALPHA);
-  boolean isRender = false ;
-  float zoom = 0.5240786 ;
   float centerRectX, centerRectY, centerSize ;
+  PImage renderMin ;
+  boolean isRender = false, updateViewPort = false ;
+  float[][] dataAnimation ;
   ViewPort (Rect _coords) { 
     super(_coords, "preview");
     viewZone   = new Rect(0,0,coords.size.x, coords.size.y); // from top left of input src-img
     renderZone = new Rect(coords.pos.x, coords.pos.y, 100, 100); 
-    srcMin  = createImage(100, 100, ALPHA);
     viewImg = createImage(int(coords.size.x), int(coords.size.y), ALPHA);
   }
   void resize(){
     coords = new Rect( d+200+350+90 , b+35, width-200-350-90-d-d, height -3*b-35 );
     scroll(0);
-
   }
   void scroll(int scroll){
     if( src.width/src.height < 1) zoom = constrain(zoom +0.05*scroll, 0.1, src.height/coords.size.y);  // src image = portrait
@@ -241,20 +238,9 @@ class ViewPort extends GuiElement {
   }
 
   void renderView(){  // render all the viewPort
-    updateView();
-    
-    viewImg = render(viewImg, (int)coords.size.x*3 );
-    viewImg.resize(viewImg.width/3,viewImg.height/3);
-
-    gui.message("Last render in "+ lastRenderTime + " sec");
-
-    image(viewImg, coords.pos.x, coords.pos.y,
-      (viewZone.pos.x+viewZone.size.x < src.width )? (int)coords.size.x : src.width /zoom,
-      (viewZone.pos.y+viewZone.size.y < src.height)? (int)coords.size.y : src.height/zoom   
-    );
-
     isRender = true ;
     viewing = false ;
+    thread("renderViewThread");
   }
   
   void updateView(){ // setup viewImg as the viewZone from src
@@ -263,53 +249,75 @@ class ViewPort extends GuiElement {
       (viewZone.pos.y+viewZone.size.y < src.height)? (int)viewZone.size.y : int( src.height ) ,
     ALPHA );
     viewImg.set(-(int)viewZone.pos.x, -(int)viewZone.pos.y, src );
-    isRender = false ;
   }
 
   void update(){
     fill(bg); drawRect(coords); // background
     
-    image(viewImg, coords.pos.x, coords.pos.y,
-      (viewZone.pos.x+viewZone.size.x < src.width )? (int)coords.size.x : src.width /zoom,
-      (viewZone.pos.y+viewZone.size.y < src.height)? (int)coords.size.y : src.height/zoom   
-    ); // display original image 
+    if( isRender ){
+      frameAnimation();
+    } else{
+      image(viewImg, coords.pos.x, coords.pos.y,
+        round((viewZone.pos.x+viewZone.size.x < src.width )? coords.size.x : src.width /zoom),
+        round((viewZone.pos.y+viewZone.size.y < src.height)? coords.size.y : src.height/zoom)   
+      ); // display original image 
+    } 
 
-    if( dropState ) { 
+
+    if( dropState ) { // drag & drop files indicator
       fill( colorActive,100 ); 
       rect( coords.pos.x, coords.pos.y, coords.size.x, coords.size.y );
       dropState=false;
     }
 
     // render renderZone
-    if( viewing ){ 
-      viewing = false ;
-      if( isRender ) updateView();
-      // set renderZone size
-      if( lastRenderTime <0.06 ){ centerSize+=2 ;} else if (lastRenderTime >0.09) { centerSize-=2 ;};
-      if( lastRenderTime <0.04 ){ centerSize+=10 ;} else if (lastRenderTime >0.11) { centerSize-=10 ;};
-      if( coords.size.x<coords.size.y ) centerSize = constrain( centerSize, 60, coords.size.x*zoom );
-      if( coords.size.x>coords.size.y ) centerSize = constrain( centerSize, 60, coords.size.y*zoom );
-      // set the renderZone position
-      centerRectX = ( coords.size.x - centerSize/zoom )/2 ;
-      centerRectY = ( coords.size.y - centerSize/zoom )/2 ;
-      
-      srcMin = createImage( int(centerSize), int(centerSize), ALPHA );  
-      srcMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
+    if ( !isRender && !updateViewPort ) {
+      if( viewing ){ 
+        viewing = false ;
+        // set renderZone size
+        if( lastRenderTime <0.06 ){ centerSize+=2 ;} else if (lastRenderTime >0.09) { centerSize-=2 ;};
+        if( lastRenderTime <0.04 ){ centerSize+=10 ;} else if (lastRenderTime >0.11) { centerSize-=10 ;};
+        if( coords.size.x<coords.size.y ) centerSize = constrain( centerSize, 50, coords.size.x*zoom-10 );
+        if( coords.size.x>coords.size.y ) centerSize = constrain( centerSize, 50, coords.size.y*zoom-10 );
+        // set the renderZone position
+        centerRectX = ( coords.size.x - centerSize/zoom )/2 ;
+        centerRectY = ( coords.size.y - centerSize/zoom )/2 ;
+        
+        renderMin = createImage( int(centerSize), int(centerSize), ALPHA );  
+        renderMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
 
-/*      if ( myThread.isActive() ) myThread.quit();
-        myThread = new MyThread();
-        myThread.sizeOut = int( centerSize/zoom ) ; myThread.srcMin = srcMin ;
-        myThread.start(); 
-*/
-      renderMin = render(srcMin, round( centerSize/zoom )*3 );
-      renderMin.resize(renderMin.width/3,renderMin.height/3);
-    }
-    
-    //if (myThread.getImg()!=null) renderMin = myThread.getImg();
-
-    if ( !isRender ) 
+        renderMin = render(renderMin, int( centerSize*3/zoom ), "quiet");
+        renderMin.resize( int(renderMin.width/3), 0 );
+      }
       image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) ); 
+    }
+
+    if (updateViewPort) updateView();
+    if (updateViewPort) updateViewPort = false ;
   }
+  void frameAnimation(){ // played during render-thread
+    PImage img = createImage(dataAnimation.length, dataAnimation[0].length, ALPHA);    
+    writeImg(img, dataAnimation); 
+    img.resize(  
+      round( (viewZone.pos.x+viewZone.size.x < src.width )? coords.size.x : src.width /zoom ),
+      round((viewZone.pos.y+viewZone.size.y < src.height)? coords.size.y : src.height/zoom) );
+    thresholdImg(img);
+    image(img, coords.pos.x, coords.pos.y);
+    fill(150,65); drawRect(coords);
+  }
+}
+void renderViewThread(){
+  PImage img = gui.elements.get(0).viewImg.get() ;
+
+  img = render(img, (int)gui.elements.get(0).coords.size.x*3, "animate" );
+  img.resize(img.width/3,img.height/3);
+
+  ((ViewPort)gui.elements.get(0)).viewImg = img;  
+  ((ViewPort)gui.elements.get(0)).isRender = false;
+  ((ViewPort)gui.elements.get(0)).updateViewPort = true;
+  updateViewImg = true;
+
+  gui.message("Last render in "+ lastRenderTime + " sec");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -333,7 +341,7 @@ class Snap extends GuiElement {
 
       snap = loadImage("gradient.png");
       snap.resize((int)coords.size.x,(int)coords.size.y);
-      snap = render(snap,(int)coords.size.x*3);
+      snap = render(snap,(int)coords.size.x*3, "quiet");
       snap.resize((int)coords.size.x,0);
 
       fill(C[25]); drawRect(coords);
@@ -460,7 +468,6 @@ class DiSlider extends GuiElement { // slider 2D
     x = coords.pos.x; y = coords.pos.y; s = coords.size.x; sh = coords.size.y;  // layout helpers
     mapImg = createImage(int(10), int(10), ARGB);
     grad = loadImage("gradient.png"); gradInvert = loadImage("gradInvert.png");
-    updateMapImg();
   }
   void moved(){}
   void pressed (){
@@ -493,33 +500,33 @@ class DiSlider extends GuiElement { // slider 2D
   }
 
   void updateMapImg(){ 
-    if (mapImg.width>0){
-      mapImg.filter(BLUR, 2); 
-      thread("renderMapImg"); 
-    }
+    mapImg.filter(BLUR, 1.5); 
+    thread("renderMapImg"); 
   }
 
   void update () {
-    float b5 = s-params.b[1]; 
-    float w5 = s-params.w[1];  // invert 0->200 to 200->0
-    handle[0] = new Rect( x+params.b[0]-10, y + map(params.b[1],0,s,s,0)-10, 20, 20 );
-    handle[1] = new Rect( x+params.w[0]-10, y + map(params.w[1],0,s,s,0)-10, 20, 20 );
+    if( frameCount%6==0 || isOver() ) {
+      float b5 = s-params.b[1]; 
+      float w5 = s-params.w[1];  // invert 0->200 to 200->0
+      handle[0] = new Rect( x+params.b[0]-10, y + map(params.b[1],0,s,s,0)-10, 20, 20 );
+      handle[1] = new Rect( x+params.w[0]-10, y + map(params.w[1],0,s,s,0)-10, 20, 20 );
 
-    pushMatrix(); translate(x, y);
-      fill(bg); rect(-40,-20,s+60,s+60 ); //bg
-      fontColor(); text(name, -50 , 10); 
-      image(mapImg, 0,20,s-20,s-20);
-      fill(240,180); rect(0,20,s-20,s-20);
-      strokeWeight( (handle[0].isOver())? 8:5 ); stroke( (handle[0].isOver() || isOver()&&!handle[1].isOver() )? colorActive :C[12] ); ellipse(params.b[0], b5, 15, 15);  // top
-      strokeWeight( (handle[1].isOver())? 8:5 ); stroke( (handle[1].isOver() || isOver()&&!handle[0].isOver() )? colorActive :C[12] ); ellipse(params.w[0], w5, 15, 15);  // bottom
-      strokeWeight(1); noStroke();
-      for (int i = 0; i<=35; i++){
-        fill(255/35*i);
-        ellipse(params.b[0]+i*(params.w[0]-params.b[0])/35, b5+i*(w5-b5)/35, 10,10);
-      }
-    popMatrix();
-    updateSlider(0, x, y+s+5, s-10);
-    updateSlider(1, x+s-15, y+s, s-10);
+      pushMatrix(); translate(x, y);
+        fill(bg); rect(-40,-20,s+60,s+60 ); //bg
+        fontColor(); text(name, -50 , 10); 
+        image(mapImg, 0,20,s-20,s-20);
+        fill(240,180); rect(0,20,s-20,s-20);
+        strokeWeight( (handle[0].isOver())? 8:5 ); stroke( (handle[0].isOver() || isOver()&&!handle[1].isOver() )? colorActive :C[12] ); ellipse(params.b[0], b5, 15, 15);  // top
+        strokeWeight( (handle[1].isOver())? 8:5 ); stroke( (handle[1].isOver() || isOver()&&!handle[0].isOver() )? colorActive :C[12] ); ellipse(params.w[0], w5, 15, 15);  // bottom
+        strokeWeight(1); noStroke();
+        for (int i = 0; i<=35; i++){
+          fill(255/35*i);
+          ellipse(params.b[0]+i*(params.w[0]-params.b[0])/35, b5+i*(w5-b5)/35, 10,10);
+        }
+      popMatrix();
+      updateSlider(0, x, y+s+5, s-10);
+      updateSlider(1, x+s-15, y+s, s-10);
+    }
   } 
   void updateSlider(int ref, float xx, float yy, float s){ 
     int sh=10 ;
@@ -557,15 +564,17 @@ class DiSlider extends GuiElement { // slider 2D
 }
 
   void renderMapImg(){
-    PImage mapImg = gui.elements.get(9).mapImg ;
+
+    PImage mapImg = gui.elements.get(9).mapImg.get() ;
     float s = gui.elements.get(9).coords.size.x ;
 
     mapImg.resize( int((s-20)/1.8),int((s-20)/1.8) ) ;
     mapImg = algoReacionDiffusion(mapImg, "renderMapImg"); 
     mapImg.resize( int(s-20)*3, 0 );
-    if (threshold) mapImg.filter(THRESHOLD, map(params.o[1],0,255,0,1) );
+    thresholdImg(mapImg);
     mapImg.resize( int(s-20), 0 );
 
     gui.elements.get(9).mapImg = mapImg;
+  
     
   }
