@@ -94,6 +94,8 @@ class Button extends GuiElement {
   void update(){
     if (isVisible){
       fill( isOver() ? C[12] : C[18] ); 
+      if( name.equals("Render") && ((ViewPort)gui.elements.get(0)).isRender )
+        fill( colorActive );
       drawRect(coords);
       fill(colorFont); 
       text(name, coords.pos.x + 5, coords.pos.y + 15);
@@ -106,7 +108,7 @@ class Button extends GuiElement {
     buttonPressed( this );
   }
   void resize(){
-    if (name=="About") coords = new Rect( width-d-coords.size.x , coords.pos.y, coords.size.x, coords.size.y );
+    if (name.equals("About")) coords = new Rect( width-d-coords.size.x , coords.pos.y, coords.size.x, coords.size.y );
   }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -316,7 +318,6 @@ void renderViewThread(){
   ((ViewPort)gui.elements.get(0)).isRender = false;
   ((ViewPort)gui.elements.get(0)).updateViewPort = true;
   updateViewImg = true;
-
   gui.message("Last render in "+ lastRenderTime + " sec");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

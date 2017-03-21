@@ -37,8 +37,8 @@ void draw() {
 	resizeListener();
   fill( (frameCount%2==0)?100:200 ); rect(10,1000,500-frameCount*2%400,30);  // debug mode
 
-  gui.elements.get(9).update();
-
+  gui.elements.get(9).update(); // diSlider
+  gui.elements.get(21).update();// render button 
   if ( synchroScroll ) gui.elements.get(0).dragged();
 
   if ( viewing || updateViewImg )  gui.elements.get(0).update() ;

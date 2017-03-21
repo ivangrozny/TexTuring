@@ -57,7 +57,7 @@ class GuiWindow {
     elements.get(7).flag = "beginAnimation";
     elements.get(8).flag = "endAnimation";
     // debug : list elements position
-    //for (int i = 0; i < gui.elements.size(); ++i) println(i + "---" + gui.elements.get(i) );  
+    for (int i = 0; i < gui.elements.size(); ++i) println(i + "---" + gui.elements.get(i) );  
   }
 
   void injectMouseMoved()          { for (GuiElement elem : elements) {                      elem.moved();    } } 
