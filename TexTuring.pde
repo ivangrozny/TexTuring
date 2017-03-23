@@ -18,14 +18,11 @@ GuiWindow gui ;
 Parameters params ;
 int listenerWidth, listenerHeight;
 
-//MyThread myThread;
-
 void settings() { size( int(displayWidth*0.8), int(displayHeight*0.8) ); }
 void setup() {
   listenerHeight=height; listenerWidth=width;
   frameRate(30);
 
-  //myThread = new MyThread();
   params = new Parameters();
   gui = new GuiWindow();
   gui.setupGui();
