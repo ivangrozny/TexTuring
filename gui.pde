@@ -78,10 +78,9 @@ class GuiWindow {
   void message(String msg){ elements.get(1).message(msg); }
   void about(){ 
     JPanel aboutPane = new JPanel(new BorderLayout());
-    String txt = "<html><h2>TexTuring 1.0</h2>General Public Licence - GNU GPL<br><br>Dithering tool based on natural patterns.<br>TexTuring is a tool to ease the use of reaction-diffusion model.<br><br><br>Project initiated by <a href='www.ivan-murit.fr'>www.ivan-murit.fr</a><br>Special thanks to the crowd-founders for the initial support !<br><br></html>";
+    String txt = "<html><h2>TexTuring 2.1</h2>2017 - General Public Licence - GNU GPL<br><br>Dithering tool based on natural patterns.<br>TexTuring is a tool to ease the use of reaction-diffusion model.<br><br><br>Project initiated in 2015 by <a href='www.ivan-murit.fr'>www.ivan-murit.fr</a><br>Special thanks to the crowd-founders for the initial support !<br><br></html>";
     aboutPane.add(new JLabel(txt));
     int aboutResult = JOptionPane.showConfirmDialog(null, aboutPane, "About", JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE);
-
   }
 }
 

@@ -94,8 +94,9 @@ class Button extends GuiElement {
   void update(){
     if (isVisible){
       fill( isOver() ? C[12] : C[18] ); 
-      if( name.equals("Render") && ((ViewPort)gui.elements.get(0)).isRender )
+      if( name.equals("Render") && ((ViewPort)gui.elements.get(0)).isRender ){
         fill( colorActive );
+      }
       drawRect(coords);
       fill(colorFont); 
       text(name, coords.pos.x + 5, coords.pos.y + 15);

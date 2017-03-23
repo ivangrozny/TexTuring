@@ -1,3 +1,5 @@
+import java.awt.Color;
+
 PImage render(PImage img, int widthOut, String state ){
 
   int imgWidth = int( params.o[2]*img.width/100 ); if (imgWidth<5) imgWidth = 5;
@@ -28,7 +30,6 @@ float NOISE_ZOOM = 0.20;
 
 PImage algoReacionDiffusion (PImage img, String state) {
 
-  if ( state.equals("export") ) surface.setTitle ("TexTuring - Evolution ..." );  
   int W = img.width, H = img.height;  
   int[][] offsetW = new int[W][2], offsetH = new int[H][2];
   float[][]  U = new float[W][H],  V = new float[W][H];
@@ -95,8 +96,12 @@ PImage algoReacionDiffusion (PImage img, String state) {
         V[i][j] += ( fkuv[i][j][3]*lapV + uvv - (fkuv[i][j][1]+F)*v   ) * 0.63 ;
       } 
     }
-    if( state.equals("export") && state.equals("animate") && n%((params.o[0])/30+1) == 0 )  
-      surface.setTitle ("TexTuring - Evolution [ "+int( (100*n)/(params.o[0]+1) )+"% ]" );
+    if( (state.equals("export") || state.equals("animate")) && n%((params.o[0])/30+1) == 0 )  {
+      String progress = "";
+      for (int i = 0; i < 15; ++i) progress += (map(n,0,params.o[0],0,15) >i)? "◼" : "◻" ;
+      surface.setTitle ("TexTuring - Evolution : "+progress+" - "+int( (100*n)/(params.o[0]+1) )+" %  " );
+    }
+
 
     if( state.equals("animate") && n>2 && n%(20) == 3 ){
       ((ViewPort)gui.elements.get(0)).dataAnimation = U ;
@@ -106,7 +111,7 @@ PImage algoReacionDiffusion (PImage img, String state) {
   writeImg(img, U);
 
   lastRenderTime = ( millis()-time ) /1000 ; 
-  if( state.equals("export") && state.equals("animate") ) surface.setTitle ( "TexTuring - 1.0" );
+  if( state.equals("export") || state.equals("animate") ) surface.setTitle ( "TexTuring" );
   
   return img;
 }

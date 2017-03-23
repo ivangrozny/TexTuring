@@ -35,10 +35,9 @@ void setup() {
 
 void draw() {
 	resizeListener();
-  fill( (frameCount%2==0)?100:200 ); rect(10,1000,500-frameCount*2%400,30);  // debug mode
 
   gui.elements.get(9).update(); // diSlider
-  gui.elements.get(21).update();// render button 
+  gui.elements.get(21).update(); // render button 
   if ( synchroScroll ) gui.elements.get(0).dragged();
 
   if ( viewing || updateViewImg )  gui.elements.get(0).update() ;
@@ -96,11 +95,11 @@ void exportImage() {
           src = loadImage( gui.listOfFiles.get(i).getAbsolutePath() );
           if( gui.elements.get(8).isSnaped() ) 
             params.nextFrameAnimation( gui.listOfFiles.size(), gui.elements.get(8).savedParams );
-          saveImage( render(src, int(sizeField.getText()), "export"), 
+          saveImage( render(src.get(), int(sizeField.getText()), "export"), 
             pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() ); 
         }
       } else {
-        saveImage( render(src, int(sizeField.getText()), "export") , path + ".png" ); 
+        saveImage( render(src.get(), int(sizeField.getText()), "export") , path + ".png" ); 
       }
     }
 
@@ -132,13 +131,12 @@ void exportImage() {
         // render every frames
         for (int i=0; i < int(nbrFrameField.getText()); ++i) {
           
-          PImage gifImg =  render(src, int(sizeField.getText())*3, "export") ;
+          PImage gifImg =  render(src.get(), int(sizeField.getText())*3, "export") ;
           gifImg.resize( int(sizeField.getText()),0);
           gifExport.addFrame( gifImg );
           gifExport.setDelay( int( float( durationField.getText() )*1000 ) ); // convert sec to ms 
           params.nextFrameAnimation( int( nbrFrameField.getText() ), gui.elements.get(8).savedParams );
         }
-      
         gifExport.finish();
       }
     }
@@ -148,7 +146,7 @@ void exportImage() {
       PGraphics pdf = createGraphics(3000, 4243, PDF, path + ".pdf");
       pdf.beginDraw();
       pdf.background(255);
-      pdf.image(render(src, 3000, "export"), 0, 150);
+      pdf.image(render(src.get(), 3000, "export"), 0, 150);
       pdf.fill(0);
       pdf.textSize(36);
       
@@ -170,7 +168,7 @@ void exportImage() {
       pdf.endDraw();
     }
     if ( extention[3].equals(extField.getSelectedItem()) ) { 
-      svgConverter( render(src, int(params.o[2]*src.width/100)*2, "export"), 1, path + ".svg" );
+      svgConverter( render(src.get(), int(params.o[2]*src.width/100)*2, "export"), 1, path + ".svg" );
     }
   }
 }
