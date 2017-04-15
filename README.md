@@ -1,8 +1,13 @@
 # TexTuring
 Dithering software applies Turing patterns to your images, rendering them in diverse, stunning, organic shapes.
 
-Software developement here ...
-Build on Processing 3.0.1
+Official project page http://ivan-murit.fr/43-en.htm
 
-<iframe src="https://player.vimeo.com/video/145301542" width="400" height="300" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe><br />
-Poject presentation [fr] http://ivan-murit.fr/43.htm
+[![Presentation video](https://i.vimeocdn.com/video/543471651_700x460.jpg)](https://vimeo.com/145301542)<br/>
+https://vimeo.com/145301542
+
+## Modify :
+Build on Processing 3.x.x https://processing.org<br/>
+Rename the folder "texturing-master" to "texturing" and run texturing.pde with processing 3<br/>
+
+Feel free to contact me if you need more info to modify or add feature !
