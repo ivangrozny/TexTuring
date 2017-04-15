@@ -98,7 +98,7 @@ PImage algoReacionDiffusion (PImage img, String state) {
     }
     if( (state.equals("export") || state.equals("animate")) && n%((params.o[0])/30+1) == 0 )  {
       String progress = "";
-      for (int i = 0; i < 15; ++i) progress += (map(n,0,params.o[0],0,15) >i)? "◼" : "◻" ;
+      for (int i = 0; i < 30; ++i) progress += (map(n,0,params.o[0],0,30) >i)? "(" : ")" ; // "◼" : "◻" ;
       surface.setTitle ("TexTuring - Evolution : "+progress+" - "+int( (100*n)/(params.o[0]+1) )+" %  " );
     }
 
