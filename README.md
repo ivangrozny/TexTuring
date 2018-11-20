@@ -10,5 +10,5 @@ Official project page http://ivan-murit.fr/43-en.htm
 Build on Processing 3.x.x https://processing.org<br/>
 Rename the folder "texturing-master" to "texturing" and run texturing.pde with processing 3<br/>
 
-Feel free to contact me if you need more info to modify or add feature !8
+Feel free to contact me if you need more info to modify or add feature !8<br/>
 http://ivan-murit.fr
