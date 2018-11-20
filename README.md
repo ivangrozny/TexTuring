@@ -4,7 +4,7 @@ Dithering software applies Turing patterns to your images, rendering them in div
 Official project page http://ivan-murit.fr/43-en.htm
 
 [![Presentation video](https://i.vimeocdn.com/video/543471651_700x460.jpg)](https://vimeo.com/145301542)<br/>
-https://vimeo.com/145301542
+
 
 ## Modify :
 Build on Processing 3.x.x https://processing.org<br/>
