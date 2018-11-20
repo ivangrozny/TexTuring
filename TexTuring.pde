@@ -26,7 +26,7 @@ void setup() {
   params = new Parameters();
   gui = new GuiWindow();
   gui.setupGui();
-  fileSelected( new File(dataPath("launch.jpg")) );           
+  fileSelected( new File(dataPath("launch.jpg")) );
   params.loadFile( new File(dataPath("default.texturing")) );
 }
 
@@ -34,7 +34,7 @@ void draw() {
 	resizeListener();
 
   gui.elements.get(9).update(); // diSlider
-  gui.elements.get(21).update(); // render button 
+  gui.elements.get(21).update(); // render button
   if ( synchroScroll ) gui.elements.get(0).dragged();
 
   if ( viewing || updateViewImg )  gui.elements.get(0).update() ;
@@ -50,8 +50,8 @@ void resizeListener(){
   if (listenerWidth!=width || listenerHeight!=height) {  // resize listener
   	if( width<800 ) surface.setSize(800,height);
   	if( height<700 ) surface.setSize(width,700);
-    listenerWidth=width; listenerHeight=height; 
-    gui.resize(); 
+    listenerWidth=width; listenerHeight=height;
+    gui.resize();
     gui.update();
   }
 }
@@ -63,11 +63,11 @@ void exportImage() {
   JComboBox extField = new JComboBox( new DefaultComboBoxModel(extention) );
   JFileChooser pathField = new JFileChooser();
 
-  if (lastDirectory != null) pathField.setCurrentDirectory( lastDirectory ); 
+  if (lastDirectory != null) pathField.setCurrentDirectory( lastDirectory );
   pathField.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 
   JPanel p1 = new JPanel(); p1.add(pathField);
-  JPanel p2 = new JPanel(); 
+  JPanel p2 = new JPanel();
   p2.add(new JLabel("Image name : ")); p2.add(nameField);
   p2.add(extField);
   p2.add(Box.createHorizontalStrut(30)); p2.add(new JLabel("Image width: ")); p2.add(sizeField); p2.add(new JLabel(" pixels"));
@@ -79,10 +79,10 @@ void exportImage() {
   if (result == JOptionPane.OK_OPTION) {
 
     lastDirectory = pathField.getCurrentDirectory();
-    String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() ;  
+    String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() ;
     println("savedPath: "+ path + "["+ extField.getSelectedItem() +"]" );
 
-    if ( extention[0].equals(extField.getSelectedItem()) ) { 
+    if ( extention[0].equals(extField.getSelectedItem()) ) {
 
       if( gui.state == "multiFiles" ){
         if( gui.elements.get(7).isSnaped() )
@@ -90,23 +90,23 @@ void exportImage() {
 
         for ( int i=0; i < gui.listOfFiles.size(); ++i ) {
           src = loadImage( gui.listOfFiles.get(i).getAbsolutePath() );
-          if( gui.elements.get(8).isSnaped() ) 
+          if( gui.elements.get(8).isSnaped() )
             params.nextFrameAnimation( gui.listOfFiles.size(), gui.elements.get(8).savedParams );
-          saveImage( render(src.get(), int(sizeField.getText()), "export"), 
-            pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() ); 
+          saveImage( render(src.get(), int(sizeField.getText()), "export"),
+            pathField.getCurrentDirectory() + File.separator + nameField.getText() + File.separator + gui.listOfFiles.get(i).getName() );
         }
       } else {
-        saveImage( render(src.get(), int(sizeField.getText()), "export") , path + ".png" ); 
+        saveImage( render(src.get(), int(sizeField.getText()), "export") , path + ".png" );
       }
     }
 
 
-    if ( extention[1].equals(extField.getSelectedItem()) ) { 
+    if ( extention[1].equals(extField.getSelectedItem()) ) {
       // second message box to get gif export infos
-      JPanel p3 = new JPanel(); 
-      JPanel p4 = new JPanel(); 
+      JPanel p3 = new JPanel();
+      JPanel p4 = new JPanel();
       JTextField nbrFrameField = new JTextField(4); nbrFrameField.setText( "10" );
-      p3.add(nbrFrameField); 
+      p3.add(nbrFrameField);
       p3.add(new JLabel("<html> frames from <i>begining sample</i> to <i>ending sample</i></html>"));
       JTextField durationField = new JTextField(4); durationField.setText( "0.06" );
       p4.add(durationField);
@@ -127,33 +127,33 @@ void exportImage() {
 
         // render every frames
         for (int i=0; i < int(nbrFrameField.getText()); ++i) {
-          
+
           PImage gifImg =  render(src.get(), int(sizeField.getText())*3, "export") ;
           gifImg.resize( int(sizeField.getText()),0);
           gifExport.addFrame( gifImg );
-          gifExport.setDelay( int( float( durationField.getText() )*1000 ) ); // convert sec to ms 
+          gifExport.setDelay( int( float( durationField.getText() )*1000 ) ); // convert sec to ms
           params.nextFrameAnimation( int( nbrFrameField.getText() ), gui.elements.get(8).savedParams );
         }
         gifExport.finish();
       }
     }
 
-    if ( extention[2].equals(extField.getSelectedItem()) ) { 
-      
+    if ( extention[2].equals(extField.getSelectedItem()) ) {
+
       PGraphics pdf = createGraphics(3000, 4243, PDF, path + ".pdf");
       pdf.beginDraw();
       pdf.background(255);
       pdf.image(render(src.get(), 3000, "export"), 0, 150);
       pdf.fill(0);
       pdf.textSize(36);
-      
+
       pdf.text("TexTuring 1.0",20,40);
       pdf.text(nameField.getText(),120,40);
 
       pdf.text("Growing Time : " + params.o[0],500,40);
       pdf.text("Threshold : "    + params.o[1],500,80);
       pdf.text("Size : "         + params.o[2],500,120);
-      
+
       String[] label = { "Bay X","Bay Y","Feed","Kill" };
       for (int i = 0; i < 4; ++i) {
         pdf.text(label[i]                  ,1000+i*500,40);
@@ -164,7 +164,7 @@ void exportImage() {
       pdf.dispose();
       pdf.endDraw();
     }
-    if ( extention[3].equals(extField.getSelectedItem()) ) { 
+    if ( extention[3].equals(extField.getSelectedItem()) ) {
       svgConverter( render(src.get(), int(params.o[2]*src.width/100)*2, "export"), 1, path + ".svg" );
     }
   }
@@ -174,7 +174,7 @@ void exportImage() {
 void saveImage ( PImage img, String path ) {
 
   PGraphics pg = null ;
-  pg = createGraphics(img.width, img.height); 
+  pg = createGraphics(img.width, img.height);
   pg.beginDraw();
   pg.image(img,0,0);
   pg.endDraw();
@@ -182,9 +182,9 @@ void saveImage ( PImage img, String path ) {
   gui.message("image file saved");
 }
 
-void fileSelected(File selection) { 
+void fileSelected(File selection) {
   if (selection !=null) {
-    lastPath = selection.getAbsolutePath(); 
+    lastPath = selection.getAbsolutePath();
     PImage tmp = loadImage(lastPath);
     tmp.filter(GRAY);
     src = createImage(tmp.width, tmp.height, ALPHA);
