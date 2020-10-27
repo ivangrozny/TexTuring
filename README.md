@@ -1,4 +1,4 @@
-# TexTuring
+# TexTuring 2.2
 Dithering software applies Turing patterns to your images, rendering them in diverse, stunning, organic shapes.
 
 Official project page http://ivan-murit.fr/43-en.htm
