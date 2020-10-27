@@ -9,6 +9,7 @@ class GuiElement {
   boolean isOver = false;
   boolean isVisible = true;
   boolean dropState = false;
+  boolean isSelected = false;
   Parameters savedParams ;
   String flag = "";
 
@@ -31,7 +32,7 @@ class GuiElement {
 
   void update() {}
   //callbacks for injecting events
-  void moved() { update();}
+  void moved() { update(); }
   void pressed() {}
   void released() {}
   void dragged() {}
@@ -66,9 +67,9 @@ Rect zone;
     update();
   }
   void update(){
-    fill( isOver() ? C[14] : C[16] );
+    fill( isOver() ? C[14] : C[18] );
     drawRect(coords);
-    fill(colorFont);
+    fill(0);
     text(name, coords.pos.x + 5, coords.pos.y + 15);
     for (int i = 1; i<names.length; i++){
       for (GuiElement _elem : gui.elements) {
@@ -86,33 +87,34 @@ Rect zone;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Button extends GuiElement {
-
-  Button(Rect _coords, String _name) {
-    super(_coords, _name);
-    update();
-  }
-  void update(){
-    if (isVisible){
-      fill( isOver() ? C[12] : C[18] );
-      if( name.equals("Render") && ((ViewPort)gui.elements.get(0)).isRender ){
-        fill( colorActive );
-      }
-      drawRect(coords);
-      fill(colorFont);
-      text(name, coords.pos.x + 5, coords.pos.y + 15);
-    }else{
-      fill(C[25]);
-      drawRect(coords);
+    Button(Rect _coords, String _name) {
+        super(_coords, _name);
+        update();
     }
-  }
-  void pressed() {
-    buttonPressed( this );
-  }
-  void resize(){
-    if (name.equals("About")) coords = new Rect( width-d-coords.size.x , coords.pos.y, coords.size.x, coords.size.y );
-  }
+    void update(){
+      if (isVisible){
+          if( name.equals("Render") && isRendering ){
+              fill( isOver()? C[8] : C[12] ); drawRect(coords);
+              fill(C[25]); text("Stop", coords.pos.x + 5, coords.pos.y + 15);
+          }else{
+              fill( isOver() ? C[15] : C[19] );
+              if( isSelected ) fill( C[13] );
+              drawRect(coords);
+              fill(0); text(name, coords.pos.x + 5, coords.pos.y + 15);
+          }
+      }else{
+          fill(C[24]);
+          drawRect(coords);
+      }
+    }
+    void pressed() {
+      buttonPressed( this );
+    }
+    void resize(){
+      if (name.equals("About")) coords = new Rect( width-d-coords.size.x , coords.pos.y, coords.size.x, coords.size.y );
+    }
 }
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class CheckBox extends GuiElement {
   boolean b = false;
@@ -121,9 +123,10 @@ class CheckBox extends GuiElement {
     update();
   }
   void update(){
-    fill( C[18] ); if(isOver()) fill(colorActive);
+    fill( C[20] ); if(isOver()) fill(C[19]); // fond
     drawRect(coords);
-    fill( b ? C[15] : C[5] );
+    fill( b ? C[18] : C[14] );
+    if(isOver()) fill(colorActive); // fond
     rect(coords.pos.x+4, coords.pos.y+4, coords.size.x-8, coords.size.y-8);
   }
   void pressed() {
@@ -136,21 +139,27 @@ class CheckBox extends GuiElement {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class StatusBar extends GuiElement {
-  String txt = "init";
+  String txt = "";
   StatusBar(Rect _coords, String _name) {
     super(_coords, _name);
     update();
   }
   void update(){
-    fill( 240 );
-    drawRect(coords);
-    fill(C[10]);
-    text(txt, coords.pos.x + 5, coords.pos.y + 15);
+    fill( 255 ); drawRect(coords);
+    fill(C[0]); text(txt, coords.pos.x + 10, coords.pos.y + 15);
+    if (isRendering){
+        int space = 120;
+        fill(bg); rect(coords.pos.x + space-6, coords.pos.y, space+2, coords.size.y);
+        fill( ( txt.equals("Saving file ...") && frameCount%15<5 )? C[14] : C[19]);
+        rect(coords.pos.x + space, coords.pos.y, 110, coords.size.y);
+        fill(C[10]); rect(coords.pos.x + space, coords.pos.y, renderProgress, coords.size.y);
+        if (txt.equals("Saving file ...")) updateMessage = true;
+    }
   }
   void message(String msg){
+      //  TODO limiter la taille du text
     println("msg: "+msg);
     txt = msg ;
-    update();
   }
   void resize(){
     coords = new Rect( coords.pos.x , coords.pos.y, width-coords.pos.x-50-d, coords.size.y );
@@ -191,13 +200,16 @@ class Slider extends GuiElement {
     //float b = params.o[ref]*w/range;
     float b = map( params.o[ref], 0,range, 0,coords.size.x ) ;
 
-    fill( C[19] );
+    fill( C[20] );
     drawRect(coords);
     pushMatrix(); translate(coords.pos.x, coords.pos.y);
         if (name=="iterations"||name=="resolution") image(sliderTimeBg, int(coords.size.x - sliderTimeBg.width), 0 );  // bg img
-        fill( isOver() ? C[11] : C[14] ); if(press) fill(colorActive);
+        if (!isOver()) fill( C[14] );
+        if (isOver()) fill( C[11] );
+        if(press) fill(colorActive);
+        if (!threshold && ref==1) fill( C[18] );
         rect(0, 0, b, coords.size.y); // Slider
-        fill(colorFont);
+        fontColor();
         text(txt, 0 , -8);
         float textPos = b < coords.size.x-30 ? b+5 : b-30 ;
         text((int)params.o[ref], textPos, coords.size.y-6);  // number display
@@ -210,7 +222,7 @@ class ViewPort extends GuiElement {
   Rect renderZone ;
   float centerRectX, centerRectY, centerSize ;
   PImage renderMin ;
-  boolean isRender = false, updateViewPort = false ;
+  boolean updateViewPort = false ;
   float[][] dataAnimation ;
   ViewPort (Rect _coords) {
     super(_coords, "preview");
@@ -229,57 +241,61 @@ class ViewPort extends GuiElement {
     viewZone.size.y = coords.size.y*zoom ;
     synchroScroll = true ;
   }
-  void moved() {}
+  void moved() {
+      if (coords.isOver() ){ cursor(MOVE); }else{ cursor(ARROW); }
+  }
   void dragged() {
     if ( isOver() || synchroScroll ) {
       synchroScroll = false ;
       viewZone.pos.x = constrain( viewZone.pos.x+pmouseX-mouseX, 0, (src.width -viewZone.size.x > 0) ? src.width -viewZone.size.x : 0 ) ;
       viewZone.pos.y = constrain( viewZone.pos.y+pmouseY-mouseY, 0, (src.height-viewZone.size.y > 0) ? src.height-viewZone.size.y : 0 ) ;
-      updateView();
+      updateView(src);
       viewing = true ;
     }
   }
 
   void renderView(){  // render all the viewPort
-    isRender = true ;
-    viewing = false ;
-    thread("renderViewThread");
+      if ( isRendering ) {
+        killRender = true;
+      }else{
+          isRendering = true ;
+          viewing = false ;
+          thread("renderViewThread");
+      }
   }
 
-  void updateView(){ // setup viewImg as the viewZone from src
+  void updateView( PImage source ){ // setup viewImg as the viewZone from src
     viewImg = createImage(
       (viewZone.pos.x+viewZone.size.x < src.width )? (int)viewZone.size.x : int( src.width  ) ,
       (viewZone.pos.y+viewZone.size.y < src.height)? (int)viewZone.size.y : int( src.height ) ,
     ALPHA );
-    viewImg.set(-(int)viewZone.pos.x, -(int)viewZone.pos.y, src );
+    viewImg.set(-(int)viewZone.pos.x, -(int)viewZone.pos.y, source );
   }
 
   void update(){
-    fill(bg); drawRect(coords); // background
+    fill(bg); rect(coords.pos.x,coords.pos.y,coords.size.x+10,coords.size.y+10); // background
 
-    if( isRender ){
-      frameAnimation();
+    if( isRendering ){ frameAnimation();
     } else{
-      image(viewImg, coords.pos.x, coords.pos.y,
-        round((viewZone.pos.x+viewZone.size.x < src.width )? coords.size.x : src.width /zoom),
-        round((viewZone.pos.y+viewZone.size.y < src.height)? coords.size.y : src.height/zoom)
-      ); // display original image
+        image(viewImg, coords.pos.x, coords.pos.y,
+            round((viewZone.pos.x+viewZone.size.x < src.width )? coords.size.x : src.width /zoom),
+            round((viewZone.pos.y+viewZone.size.y < src.height )? coords.size.y : src.height /zoom)
+       ); // display original image
     }
-
 
     if( dropState ) { // drag & drop files indicator
       fill( colorActive,100 );
       rect( coords.pos.x, coords.pos.y, coords.size.x, coords.size.y );
-      dropState=false;
     }
 
     // render renderZone
-    if ( !isRender && !updateViewPort ) {
+    if ( !isRendering && !updateViewPort ) {
       if( viewing ){
         viewing = false ;
         // set renderZone size
         if( lastRenderTime <0.06 ){ centerSize+=2 ;} else if (lastRenderTime >0.09) { centerSize-=2 ;};
         if( lastRenderTime <0.04 ){ centerSize+=10 ;} else if (lastRenderTime >0.11) { centerSize-=10 ;};
+        if( lastRenderTime <0.01 ){ centerSize+=50 ;} else if (lastRenderTime >0.30) { centerSize-=50 ;};
         if( coords.size.x<coords.size.y ) centerSize = constrain( centerSize, 50, coords.size.x*zoom-10 );
         if( coords.size.x>coords.size.y ) centerSize = constrain( centerSize, 50, coords.size.y*zoom-10 );
         // set the renderZone position
@@ -289,24 +305,24 @@ class ViewPort extends GuiElement {
         renderMin = createImage( int(centerSize), int(centerSize), ALPHA );
         renderMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
 
-        renderMin = render(renderMin, int( centerSize*3/zoom ), "quiet");
-        renderMin.resize( int(renderMin.width/3), 0 );
+        renderMin = render(renderMin, int( centerSize/zoom ), "");
+        // renderMin.resize( int(renderMin.width/3), 0 ); // antialiazing
       }
       image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) );
     }
 
-    if (updateViewPort) updateView();
+    if (updateViewPort) updateView(src);
     if (updateViewPort) updateViewPort = false ;
   }
   void frameAnimation(){ // played during render-thread
     PImage img = createImage(dataAnimation.length, dataAnimation[0].length, ALPHA);
     writeImg(img, dataAnimation);
-    img.resize(
-      round( (viewZone.pos.x+viewZone.size.x < src.width )? coords.size.x : src.width /zoom ),
-      round((viewZone.pos.y+viewZone.size.y < src.height)? coords.size.y : src.height/zoom) );
+    img.resize( round( (viewZone.pos.x+viewZone.size.x < src.width )? coords.size.x : src.width /zoom ), 0 );
     thresholdImg(img);
     image(img, coords.pos.x, coords.pos.y);
-    fill(150,65); drawRect(coords);
+    fill(150,70);
+    if(!lastFrameAnimation) rect(coords.pos.x, coords.pos.y,img.width,img.height);
+    lastFrameAnimation = false;
   }
 }
 void renderViewThread(){
@@ -314,12 +330,10 @@ void renderViewThread(){
 
   img = render(img, (int)gui.elements.get(0).coords.size.x*3, "animate" );
   img.resize(img.width/3,img.height/3);
-
-  ((ViewPort)gui.elements.get(0)).viewImg = img;
-  ((ViewPort)gui.elements.get(0)).isRender = false;
-  ((ViewPort)gui.elements.get(0)).updateViewPort = true;
-  updateViewImg = true;
-  gui.message("Last render in "+ lastRenderTime + " sec");
+  gui.elements.get(0).viewImg = img.get();
+  isRendering = false;
+  ((ViewPort)gui.elements.get(0)).updateViewPort = true; updateViewImg = true;
+  gui.message("Last render in "+ int(lastRenderTime) + " sec");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -370,7 +384,7 @@ class Snap extends GuiElement {
       if ( !isOver() ) {
         fill(230); drawRect(coords);
         tint( 255, 80 );
-        image(snap, coords.pos.x, coords.pos.y, snap.width-5, snap.height); noTint();
+        image(snap, coords.pos.x, coords.pos.y, snap.width, snap.height); noTint();
       } else {
         image(snap, coords.pos.x, coords.pos.y);
         fill( delete.isOver() ? C[12] : C[17] );
@@ -382,6 +396,10 @@ class Snap extends GuiElement {
       fill( isOver()? C[10] : C[15] );
       if (flag.equals("beginAnimation")) text("begin animation", coords.pos.x+4, coords.pos.y + coords.size.y-4 );
       if (flag.equals("endAnimation"))   text("end animation",   coords.pos.x+4, coords.pos.y + coords.size.y-4 );
+    }
+    if( dropState ) { // drag & drop files indicator
+      fill( colorActive,100 );
+      rect( coords.pos.x, coords.pos.y, coords.size.x, coords.size.y );
     }
   }
 }
@@ -442,16 +460,17 @@ class BiSlider extends GuiElement {
     handle[1] = new Rect( coords.pos.x+w-18, coords.pos.y+2*sh+3, 36, sh-3 );
     handle[2] = new Rect( coords.pos.x, coords.pos.y+sh+3, coords.size.x-10, sh-6 );
     fill(bg); rect(coords.pos.x-18,coords.pos.y,coords.size.x+26,3*sh);  //bg
-    fill(handle[2].isOver() ? C[13] : C[16] ); drawRect(handle[2]); // bg bde
-    fill(C[18]); if (handle[0].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[0]); // top cursor box
-    fill(C[18]); if (handle[1].isOver() || handle[2].isOver()) fill(colorActive); drawRect(handle[1]); // bottom
+    fill( (handle[2].isOver()||handle[1].isOver()||handle[0].isOver()) ? C[19] : C[20] ); drawRect(handle[2]); // bg bde
+
+    fill( (handle[0].isOver() || handle[2].isOver())? colorActive : C[20]); drawRect(handle[0]); // top cursor
+    fill( (handle[1].isOver() || handle[2].isOver())? colorActive : C[20]); drawRect(handle[1]); // bottom
+
     pushMatrix(); translate(coords.pos.x, coords.pos.y);
-        fontColor(); text(txt, 0 , 0); textAlign(CENTER);
-        fill(0); triangle(b-18, sh-3, b+18, sh-3, b, sh+3); // top
-        fill(255); triangle(w-18, 2*sh+3, w+18, 2*sh+3, w, 2*sh-3); // bottom
-        fontColor();
-        text(int(b), b, sh-3-4);
-        text(int(w), w, 3*sh-4);
+        fill( (handle[0].isOver() || handle[2].isOver())? colorActive : C[20]); triangle(b-18, sh-3, b+18, sh-3, b, sh+3); // top cursor
+        fill( (handle[1].isOver() || handle[2].isOver())? colorActive : C[20]); triangle(w-18, 2*sh+3, w+18, 2*sh+3, w, 2*sh-3); // bottom
+        fontColor(); text(txt, 0 , -2); textAlign(CENTER);
+        fill( (handle[0].isOver() || handle[2].isOver())? 0 : C[0]); text(int(b), b, sh-3-3);
+        fill( (handle[1].isOver() || handle[2].isOver())? 0 : C[0]); text(int(w), w, 3*sh-5);
         if(b<w) image(gradInvert, b, sh+3, w-b, sh-6);
         if(b>=w)image(grad,       w, sh+3, b-w, sh-6);
     popMatrix(); textAlign(LEFT);
@@ -518,12 +537,12 @@ class DiSlider extends GuiElement { // slider 2D
         fontColor(); text(name, -50 , 10);
         image(mapImg, 0,20,s-20,s-20);
         fill(240,180); rect(0,20,s-20,s-20);
-        strokeWeight( (handle[0].isOver())? 8:5 ); stroke( (handle[0].isOver() || isOver()&&!handle[1].isOver() )? colorActive :C[12] ); ellipse(params.b[0], b5, 15, 15);  // top
-        strokeWeight( (handle[1].isOver())? 8:5 ); stroke( (handle[1].isOver() || isOver()&&!handle[0].isOver() )? colorActive :C[12] ); ellipse(params.w[0], w5, 15, 15);  // bottom
+        strokeWeight( (handle[0].isOver())? 8:5 ); stroke( (handle[0].isOver() || isOver()&&!handle[1].isOver() )? colorActive :C[20] ); ellipse(params.b[0], b5, 15, 15);  // top
+        strokeWeight( (handle[1].isOver())? 8:5 ); stroke( (handle[1].isOver() || isOver()&&!handle[0].isOver() )? colorActive :C[20] ); ellipse(params.w[0], w5, 15, 15);  // bottom
         strokeWeight(1); noStroke();
-        for (int i = 0; i<=35; i++){
-          fill(255/35*i);
-          ellipse(params.b[0]+i*(params.w[0]-params.b[0])/35, b5+i*(w5-b5)/35, 10,10);
+        for (int i = 0; i<=50; i++){
+          fill(255/50*i);
+          ellipse(params.b[0]+i*(params.w[0]-params.b[0])/50, b5+i*(w5-b5)/50, 10,10);
         }
       popMatrix();
       updateSlider(0, x, y+s+5, s-10);
@@ -538,26 +557,26 @@ class DiSlider extends GuiElement { // slider 2D
     fill(C[22]); rect(0,0,s-10,sh-6); // slider rect
     if ( abs(b-w)<36 ) {
       float mid = (b<w) ? b+(w-b)/2 : w+(b-w)/2 ;
-      if (b<w) { fill(0); triangle(mid, 12, mid-36, 12, b, sh-6); fill(255); triangle(mid, 12, mid+36, 12, w, sh-6); }
-      if (b>=w) {fill(0); triangle(mid, 12, mid+36, 12, b, sh-6); fill(255); triangle(mid, 12, mid-36, 12, w, sh-6); }
-        fill(C[18]);
+      fill(C[20]);
+      if (b<w) { triangle(mid, 12, mid-36, 12, b, sh-6); triangle(mid, 12, mid+36, 12, w, sh-6); }
+      if (b>=w){ triangle(mid, 12, mid+36, 12, b, sh-6); triangle(mid, 12, mid-36, 12, w, sh-6); }
         rect(mid, 12, -36,15);
         rect(mid, 12,  36,15); // handle rect
 
         fontColor(); textAlign(CENTER);
-      if(b<w){ text(nfs(b,0,1), mid-18, 2*sh+3); text(nfs(w,0,1), mid+18, 2*sh+3);
-      } else { text(nfs(b,0,1), mid+18, 2*sh+3); text(nfs(w,0,1), mid-18, 2*sh+3); }
+      if(b<w){ text(int(b), mid-18, 2*sh+3); text(int(w), mid+18, 2*sh+2);
+      } else { text(int(b), mid+18, 2*sh+3); text(int(w), mid-18, 2*sh+2); }
       if(b<w) image (gradInvert, b, 0, w-b, sh-6);
       if(b>=w)image (grad,       w, 0, b-w, sh-6);
     } else {
-      fill (0);   triangle ( b-18, 12, b+18, 12, b, sh-6); // top
-      fill (255); triangle ( w-18, 12, w+18, 12, w, sh-6); // bottom
-        fill(C[18]);
+        fill(C[20]);
+        triangle ( b-18, 12, b+18, 12, b, sh-6); // top
+      triangle ( w-18, 12, w+18, 12, w, sh-6); // bottom
       rect ( b-18, 12, 36, 15 ); // handle rect
       rect ( w-18, 12, 36, 15 );
         fontColor(); textAlign(CENTER);
-      text ( nfs(b,0,1), b, 23);
-      text ( nfs(w,0,1), w, 23);
+      text ( int(b), b, 22);
+      text ( int(w), w, 22);
       if(b<w) image(gradInvert, b, 0, w-b, sh-6);
       if(b>=w)image(grad,       w, 0, b-w, sh-6);
     }
@@ -565,7 +584,7 @@ class DiSlider extends GuiElement { // slider 2D
   }
 }
 
-  void renderMapImg(){
+void renderMapImg(){
 
     PImage mapImg = gui.elements.get(9).mapImg.get() ;
     float s = gui.elements.get(9).coords.size.x ;
@@ -578,5 +597,4 @@ class DiSlider extends GuiElement { // slider 2D
 
     gui.elements.get(9).mapImg = mapImg;
 
-
-  }
+}

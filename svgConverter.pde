@@ -21,8 +21,9 @@ Bitmap bmp;
 PoTraceJ poTraceJ = new PoTraceJ(param);
 BufferedImage result;
 
-
+// ancien moteur de vectorisation - fonction non-utilisee
 void svgConverter( PImage input, float scale, String filePath ){
+    print("-0 ");
     PoTraceJ poTraceJ = new PoTraceJ(param);
     path_t trace = null;
 
@@ -36,13 +37,14 @@ void svgConverter( PImage input, float scale, String filePath ){
                 bmp.put(x, y, 0 );
             }
         }
-    } 
+    }
 
-
+    print("-1 ");
     trace = poTraceJ.trace(bmp);
-
+    print("-2 ");
     ArrayList<PathElement> al = new ArrayList<PathElement>();
     ConvertToJavaCurves.convert(trace, new HashSet<ConvertToJavaCurves.Point>(), al);
+    print("-3 ");
 
     DOMImplementation domImpl = GenericDOMImplementation.getDOMImplementation();
     String svgNS = "http://www.w3.org/2000/svg";
@@ -71,7 +73,7 @@ void svgConverter( PImage input, float scale, String filePath ){
                 case CURVE_TO:
                     path.curveTo(pathElement.getP0x(), pathElement.getP0y(), pathElement.getP1x(), pathElement.getP1y(), pathElement.getP2x(), pathElement.getP2y());
                     break;
-                default : break;    
+                default : break;
             }
         }
         g2.setPaint(Color.black);
@@ -82,6 +84,7 @@ void svgConverter( PImage input, float scale, String filePath ){
     g2.stream(out, false);
     out.close();
    } catch (Exception e) {
+       println("vectorization errors :::");
     println(e);
    }
 }
@@ -98,11 +101,11 @@ void svgConverter( PImage input, float scale, String filePath ){
 
         PShape s = createShape();
         s.colorMode(HSB);
-        
+
 
         for (PathElement pathElement : al) {
             println(" "+pathElement.getType());
-            switch (pathElement.getType()) { 
+            switch (pathElement.getType()) {
                 case CLOSE_PATH:
                     s.endShape(CLOSE);
                     break;
@@ -118,8 +121,8 @@ void svgConverter( PImage input, float scale, String filePath ){
                     break;
 
                 case CURVE_TO:
-                    s.bezierVertex( (float)pathElement.getP0x(), (float)pathElement.getP0y(), 
-                        (float)pathElement.getP1x(), (float)pathElement.getP1y(), 
+                    s.bezierVertex( (float)pathElement.getP0x(), (float)pathElement.getP0y(),
+                        (float)pathElement.getP1x(), (float)pathElement.getP1y(),
                         (float)pathElement.getP2x(), (float)pathElement.getP2y() );
                     break;
 
@@ -127,7 +130,7 @@ void svgConverter( PImage input, float scale, String filePath ){
                     s.beginContour();
                     i+=50;
                     s.fill( color(i,255,127) );
-                    break; 
+                    break;
                 case PUSH_PARENT:
                     s.endContour();
                     i-=50;
@@ -138,8 +141,3 @@ void svgConverter( PImage input, float scale, String filePath ){
         shape(s, 25, 25);
         endRecord();
 */
-
-
-import gifAnimation.*;
-
-GifMaker gifExport;
