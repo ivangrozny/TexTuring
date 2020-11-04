@@ -94,7 +94,8 @@ void exportImage() {
     lastDirectory = pathField.getCurrentDirectory();
     String path = pathField.getCurrentDirectory() + File.separator + nameField.getText() ;
 
-    if(extention[2].equals(extField.getSelectedItem())) gifExport = new GifMaker(this, path + ".gif" );
+    if( split((String)extField.getSelectedItem(),' ')[0].equals(".gif") ) gifExport = new GifMaker(this, path + ".gif" );
+
     new ExportThread(path, int(widthField.getText()), split((String)extField.getSelectedItem(),' ')[0] ).start();
     isRendering = true;
   }
@@ -145,6 +146,7 @@ class ExportThread extends Thread{
 
             int result2 = JOptionPane.showConfirmDialog(null, outer2, "Animation export options", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
             if (result2 == JOptionPane.OK_OPTION) {
+
                 gifExport.setRepeat(0); // infinite
                 gifExport.setQuality(10); // default 10
 
@@ -165,10 +167,10 @@ class ExportThread extends Thread{
         }
 
         if ( ext.equals(".pdf") ) {
-            vectorization( render(src.get(), int(params.o[2]*src.width/100)*5, "export"), path + ".pdf",1 );
+            vectorization( render(src.get(), int(params.o[2]*src.width/100)*4, "export"), path + ".pdf",1 );
         }
         if ( ext.equals(".svg") ) {
-            vectorization( render(src.get(), int(params.o[2]*src.width/100)*5, "export"), path + ".svg",2 );
+            vectorization( render(src.get(), int(params.o[2]*src.width/100)*4, "export"), path + ".svg",2 );
         }
         gui.message(path + ext + "   file saved.");
         isRendering = false;
