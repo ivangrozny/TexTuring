@@ -9,6 +9,7 @@ Official project page http://ivan-murit.fr/43-en.htm
 ## Modify :
 Build on Processing 3.x.x https://processing.org<br/>
 Rename the folder "texturing-master" to "texturing" and run texturing.pde with processing 3<br/>
+TexTuring work with these Processing libraries : *Boofcv, Drop* and *GifAnimation*
 
 Feel free to contact me if you need more info to use, modify or add new feature !<br/>
 http://ivan-murit.fr
