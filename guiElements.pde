@@ -36,6 +36,7 @@ class GuiElement {
   void pressed() {}
   void released() {}
   void dragged() {}
+  void initView() {}
   //helpers to uniformize ways of drawings things
   void drawRect( Rect r) {             rect(   r.pos.x, r.pos.y, r.size.x, r.size.y ); }
   void drawImage(PImage i, Rect r) {  image(i, r.pos.x, r.pos.y, r.size.x, r.size.y ); }
@@ -51,8 +52,8 @@ class GuiElement {
 
 class Menu extends GuiElement {
 
-String[] names;
-Rect zone;
+    String[] names;
+    Rect zone;
   Menu(Rect _coords, String[] _names) {
     super(_coords, _names[0]);
     names = new String[_names.length];
@@ -93,7 +94,7 @@ class Button extends GuiElement {
     }
     void update(){
       if (isVisible){
-          if( name.equals("Render") && isRendering ){
+          if( name.equals("Render  preview") && isRendering ){
               fill( isOver()? C[8] : C[12] ); drawRect(coords);
               fill(C[25]); text("Stop", coords.pos.x + 5, coords.pos.y + 15);
           }else{
@@ -169,6 +170,7 @@ class StatusBar extends GuiElement {
 
 class Slider extends GuiElement {
   int range;
+  float pos;
   boolean press = false;
   PImage sliderTimeBg = loadImage("slider.png");
   PImage sliderTimeBg2 = loadImage("slider2.png");
@@ -180,24 +182,24 @@ class Slider extends GuiElement {
     update();
   }
   void pressed (){
-    press = true;
+      pos = mouseX;
+      press = true;
   }
   void released (){
     if (press) gui.elements.get(9).updateMapImg();
     press = false;
   }
   void dragged () {
-    if ( press ) {
-      int off = (control) ? 20 : 1 ;
-      params.o[ref] = (int)constrain( params.o[ref] + map(mouseX-pmouseX,0,coords.size.x,0,range)/off , 0, range);
+      off = (control) ? 2 : 1 ;
+      pos += (mouseX - pmouseX)/off ;
+      params.o[ref] = (int)constrain( map(pos-coords.pos.x,0, coords.size.x,0,range), 0, range);
       if( params.o[ref]==0 ) params.o[ref] = 1;
+
       update();
       viewing = true;
-    }
   }
 
   void update(){
-    //float b = params.o[ref]*w/range;
     float b = map( params.o[ref], 0,range, 0,coords.size.x ) ;
 
     fill( C[20] );
@@ -237,6 +239,7 @@ class ViewPort extends GuiElement {
   void scroll(int scroll){
     if( src.width/src.height < 1) zoom = constrain(zoom +0.05*scroll, 0.1, src.height/coords.size.y);  // src image = portrait
     if( src.width/src.height >= 1) zoom = constrain(zoom +0.05*scroll, 0.1, src.width/coords.size.x);  // src image = paysage
+    modifyViewZonePos( (viewZone.size.x-zoom*coords.size.x)/2 , (viewZone.size.y-zoom*coords.size.y)/2 ); // keep zooming centered
     viewZone.size.x = coords.size.x*zoom ;
     viewZone.size.y = coords.size.y*zoom ;
     synchroScroll = true ;
@@ -247,11 +250,20 @@ class ViewPort extends GuiElement {
   void dragged() {
     if ( isOver() || synchroScroll ) {
       synchroScroll = false ;
-      viewZone.pos.x = constrain( viewZone.pos.x+pmouseX-mouseX, 0, (src.width -viewZone.size.x > 0) ? src.width -viewZone.size.x : 0 ) ;
-      viewZone.pos.y = constrain( viewZone.pos.y+pmouseY-mouseY, 0, (src.height-viewZone.size.y > 0) ? src.height-viewZone.size.y : 0 ) ;
+      modifyViewZonePos( pmouseX - mouseX , pmouseY - mouseY );
       updateView(src);
       viewing = true ;
     }
+  }
+  void initView() {
+      scroll(-1);
+      modifyViewZonePos((src.width -viewZone.size.x)/2, (src.height-viewZone.size.y)/2 );
+      updateView(src);
+      viewing = true ;
+  }
+  void modifyViewZonePos(float x, float y) {
+      viewZone.pos.x = constrain( viewZone.pos.x+x, 0, (src.width -viewZone.size.x > 0) ? src.width -viewZone.size.x : 0 ) ;
+      viewZone.pos.y = constrain( viewZone.pos.y+y, 0, (src.height-viewZone.size.y > 0) ? src.height-viewZone.size.y : 0 ) ;
   }
 
   void renderView(){  // render all the viewPort
@@ -589,7 +601,7 @@ void renderMapImg(){
     PImage mapImg = gui.elements.get(9).mapImg.get() ;
     float s = gui.elements.get(9).coords.size.x ;
 
-    mapImg.resize( int((s-20)/1.8),int((s-20)/1.8) ) ;
+    mapImg.resize( int((s-20)/1.6),int((s-20)/1.6) ) ;
     mapImg = algoReactionDiffusion(mapImg, "renderMapImg");
     mapImg.resize( int(s-20)*3, 0 );
     thresholdImg(mapImg);

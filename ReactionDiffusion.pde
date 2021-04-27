@@ -9,7 +9,7 @@ PImage render(PImage img, int widthOut, String state ){
 
     if ( state.equals("export") || state.equals("animate") ) {
         // load PImage to bufferImage
-        BufferedImage scaledImg = Scalr.resize( (BufferedImage)img.getNative(), Scalr.Method.ULTRA_QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);
+        BufferedImage scaledImg = Scalr.resize( (BufferedImage)img.getNative(), Scalr.Method.QUALITY, Scalr.Mode.FIT_TO_WIDTH, widthOut);
         img = new PImage(scaledImg);
     }else{
         img.resize( widthOut, 0 );  // may be faster but uglyer (blobs not perfectly round)
@@ -23,7 +23,7 @@ void thresholdImg(PImage img){
 }
 //////////////////////////////////////////////// reaction - diffusion ///////////////
 float uvv, u, v;
-float diffU, diffV, F, K;
+float diffU, diffV;
 float lapU, lapV;
 float[] MINI = { 0.00, 0.01, 0.03, 0.005 };  // F, K, diffU, diffV
 float[] MAXI = { 0.15, 0.08, 0.11, 0.05 };  // F, K, diffU, diffV
@@ -90,15 +90,12 @@ PImage algoReactionDiffusion (PImage img, String state) {
         for (int i = 0; i < W; ++i) {
             for (int j = 0; j < H; ++j) {
 
-                F = fkuv[i][j][0] ;
-                u = U[i][j];
-                v = V[i][j];
-                uvv = u*v*v;
-                lapU = U[offsetW[i][0]][j] + U[offsetW[i][1]][j] + U[i][offsetH[j][0]] + U[i][offsetH[j][1]] -4*u;
-                lapV = V[offsetW[i][0]][j] + V[offsetW[i][1]][j] + V[i][offsetH[j][0]] + V[i][offsetH[j][1]] -4*v;
+                lapU = U[offsetW[i][0]][j] + U[offsetW[i][1]][j] + U[i][offsetH[j][0]] + U[i][offsetH[j][1]] -4*U[i][j];
+                lapV = V[offsetW[i][0]][j] + V[offsetW[i][1]][j] + V[i][offsetH[j][0]] + V[i][offsetH[j][1]] -4*V[i][j];
 
-                U[i][j] += ( fkuv[i][j][2]*lapU - uvv + F*(1 - u) ) * 1.38 ;
-                V[i][j] += ( fkuv[i][j][3]*lapV + uvv - (fkuv[i][j][1]+F)*v   ) * 0.63 ;
+                uvv = U[i][j]*V[i][j]*V[i][j];
+                U[i][j] += ( fkuv[i][j][2]*lapU - uvv + fkuv[i][j][0]*(1 - U[i][j]) ) * 1.38 ;
+                V[i][j] += ( fkuv[i][j][3]*lapV + uvv - (fkuv[i][j][1]+fkuv[i][j][0])*V[i][j] ) * 0.63 ;
             }
         }
         if( (state.equals("export") || state.equals("animate")) && n%int((params.o[0])/100+1) == 0 )  {
@@ -106,7 +103,7 @@ PImage algoReactionDiffusion (PImage img, String state) {
             gui.message("Rendering : "+renderProgress+" %  " );
         }
 
-        if( (state.equals("export") || state.equals("animate")) && n%10 == 3 ){
+        if( (state.equals("export") || state.equals("animate")) && n%30 == 3 ){
             ((ViewPort)gui.elements.get(0)).dataAnimation = U ;
             updateViewImg = true;
         }
@@ -124,7 +121,6 @@ PImage algoReactionDiffusion (PImage img, String state) {
 
     return img;
 }
-
 void writeImg(PImage img, float[][] U){
     int pShift;
     for (int i = 0; i < img.width; i++) {

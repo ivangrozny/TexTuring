@@ -26,12 +26,12 @@ class GuiWindow {
                           elements.add(new Menu  (new Rect(guiRect), new String[]{ "Parameters", "Save settings", "Load settings" } ));
     guiRect.size.x = 113;
     guiRect.pos.x += 190; elements.add(new Menu  (new Rect(guiRect), new String[]{ "Input  image", "Select file", "Select folder" } ));
-    guiRect.pos.x += 118; elements.add(new Menu  (new Rect(guiRect), new String[]{ "Seeding mode", "random", "noise", "uniform" } ));
-    guiRect.pos.x += 118; elements.add(new Button(new Rect(guiRect), "Export  image"));
+    guiRect.pos.x += 118; elements.add(new Menu  (new Rect(guiRect), new String[]{ "Seeding  mode", "random", "noise", "uniform" } ));
+    guiRect.pos.x += 118; elements.add(new Button(new Rect(guiRect), "Save  image"));
 
                           elements.add(0,new ViewPort(new Rect( d+200+350+90 , b+35, width-200-350-90-d-d, height -3*b-35 )));
 
-    guiRect.pos.x = d+200+350+90; elements.add(new Button(new Rect(guiRect) , "Render"));
+    guiRect.pos.x = d+200+350+90; elements.add(new Button(new Rect(guiRect) , "Render  preview"));
     guiRect.size.x = 22; guiRect.size.y = 22;
     guiRect.pos.x +=118;  elements.add(new Button(new Rect(guiRect), " +"));
     guiRect.pos.x += 22+5;elements.add(new Button(new Rect(guiRect), " -"));
@@ -65,10 +65,10 @@ class GuiWindow {
     // for (int i = 0; i < gui.elements.size(); ++i) println(i + "---" + gui.elements.get(i).name );
   }
 
-  void injectMouseMoved()   { for(GuiElement elem:elements){ if(                !isRendering||elem.name.equals("Render"))   elem.moved();    } }
-  void injectMouseDragged() { for(GuiElement elem:elements){ if(elem.isOver()&&(!isRendering||elem.name.equals("Render")))  { elem.dragged();      return; } } }
-  void injectMouseReleased(){ for(GuiElement elem:elements){ if(elem.isOver()&&(!isRendering||elem.name.equals("Render")))  { elem.released();     return; } } }
-  void injectMousePressed() { for(GuiElement elem:elements){ if(elem.isOver()&&(!isRendering||elem.name.equals("Render")))  { elem.pressed();      return; } } }
+  void injectMouseMoved()   { for(GuiElement elem:elements){if(                !isRendering||elem.name.equals("Render  preview"))  elem.moved(); } }
+  void injectMouseDragged() { for(GuiElement elem:elements){if(elem.isOver()&&(!isRendering||elem.name.equals("Render  preview"))){elem.dragged();return; }}}
+  void injectMouseReleased(){ for(GuiElement elem:elements){if(elem.isOver()&&(!isRendering||elem.name.equals("Render  preview"))){elem.released();return;}}}
+  void injectMousePressed() { for(GuiElement elem:elements){if(elem.isOver()&&(!isRendering||elem.name.equals("Render  preview"))){elem.pressed();return; }}}
   void injectMouseWheel(int scroll){ for (GuiElement elem : elements) { if(elem.isOver()&&!isRendering ) { elem.scroll(scroll); return; } } }
 
   void update(){
@@ -83,7 +83,7 @@ class GuiWindow {
   void message(String msg){ elements.get(1).message(msg); updateMessage = true; }
   void about(){
     JPanel aboutPane = new JPanel(new BorderLayout());
-    JLabel    p1 = new JLabel("<html><h2>TexTuring 2.2</h2>2015-2020 - General Public Licence - GNU GPL<br>Dithering tool based on natural patterns.<br><br> Concept & production :<br></html>");
+    JLabel    p1 = new JLabel("<html><h2>TexTuring 2.3</h2>2015-2021 - General Public Licence - GNU GPL<br>Dithering tool based on natural patterns.<br><br> Concept & production :<br></html>");
     SwingLink p2 = new SwingLink("www.ivan-murit.fr", "www.ivan-murit.fr");
     JLabel    p3 = new JLabel("<html><br>Special thanks to the crowd-founders for the initial support !<br><br></html>");
     p1.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -96,9 +96,6 @@ class GuiWindow {
   }
 }
 
-void loadFile( File _file ){ params.loadFile( _file ); }
-void saveFile( File _file ){ params.saveFile( _file ); }
-
 void keyPressed(){
   if (key=='+')  gui.elements.get(0).scroll(-1);
   if (key=='-')  gui.elements.get(0).scroll(1);
@@ -110,12 +107,12 @@ void keyPressed(){
 void buttonPressed( GuiElement e ){
     if ( e.name == "Select file" ) { selectInput("Select a new image", "fileSelected"); }
     if ( e.name == "Select folder" ) { selectFolder("Select a folder to process:", "folderSelected");}
-    if ( e.name == "Export  image" ) { exportImage(); }
+    if ( e.name == "Save  image" ) { exportImage(); }
     if ( e.name == "Load settings" ) { selectInput( "Select TexTuring settings file", "loadFile"); viewing = true ; }
     if ( e.name == "Save settings" ) { selectOutput("Name your TexTuring settings file", "saveFile"); }
     if ( e.name == "specimen" ) {  }
     if ( e.name == "check threshold" ) { threshold = !threshold ; viewing=true; }
-    if ( e.name == "Render"){ gui.elements.get(0).renderView(); }
+    if ( e.name == "Render  preview"){ gui.elements.get(0).renderView(); }
     if ( e.name == " +" ) {  gui.elements.get(0).scroll(-1); }
     if ( e.name == " -" ) {  gui.elements.get(0).scroll(1); }
     if ( e.name == "About" ) { gui.about(); }
@@ -125,6 +122,9 @@ void buttonPressed( GuiElement e ){
     if ( e.name == "uniform"){params.iniState=2; viewing=true; synchroScroll=true; e.isSelected=true; e16.isSelected=false; e17.isSelected=false; gui.update(); }
     mousePressed = false ;
 }
+
+void loadFile( File _file ){ params.loadFile( _file ); }
+void saveFile( File _file ){ params.saveFile( _file ); }
 
 color[] C = new color[26];
 color bg = color(225);

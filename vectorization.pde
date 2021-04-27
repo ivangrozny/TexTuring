@@ -5,6 +5,7 @@ import georegression.struct.point.*;
 
 import java.util.List;
 import processing.pdf.*;
+import processing.svg.*;
 
 void vectorization( PImage img, String fileName, int format){
     PGraphics vecto = null;

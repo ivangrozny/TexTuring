@@ -23,16 +23,20 @@ class Parameters {
   void saveFile( File _file ){ if(_file != null) save( _file.getAbsolutePath() ); }
 
   void load( String[] _data ){
-    for (int i = 0; i<4; i++) {
-      String[] tmp = split(_data[i]," ");
-      b[i] = float( tmp[0] );
-      w[i] = float( tmp[1] );
-    }
-    o[0] = int(_data[4] );
-    o[1] = int(_data[5] );
-    o[2] = int(_data[6] );
-    iniState = int(_data[7]) ;
-    gui.update();
+      print(_data.length );
+      if ( _data.length == 8 ){
+          for (int i = 0; i<4; i++) {
+              String[] tmp = split(_data[i]," ");
+              b[i] = float( tmp[0] );
+              w[i] = float( tmp[1] );
+          }
+          o[0] = int(_data[4] );
+          o[1] = int(_data[5] );
+          o[2] = int(_data[6] );
+          iniState = int(_data[7]) ;
+          gui.update();
+          updateViewImg = true;
+      }
   }
   void loadParameters( Parameters other ) {
     arrayCopy(other.b, b) ;

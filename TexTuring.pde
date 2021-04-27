@@ -1,11 +1,12 @@
-import javax.swing.*;
-import java.awt.event.*;
-import java.awt.BorderLayout;
+import java.awt.*;
 import java.awt.image.BufferedImage;
-import gifAnimation.*;
-GifMaker gifExport;
-import drop.*; SDrop drop; MyDropListener dropListener;
+import java.io.*;
+import java.util.*;
+import javax.swing.*;
 import org.apache.commons.io.FilenameUtils;
+
+import gifAnimation.*; GifMaker gifExport;
+import drop.*; SDrop drop; MyDropListener dropListener;
 
 boolean control = false, viewing = false, threshold = true, lastFrameAnimation = false, isRendering = false ;
 boolean killRender = false;
@@ -197,7 +198,7 @@ void fileSelected(File selection) {
     w = src.width;
     h = src.height;
     gui.update();
-    gui.elements.get(0).scroll(-1);
+    gui.elements.get(0).initView();
     viewing = true ;
   }
 }
