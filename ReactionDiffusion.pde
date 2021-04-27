@@ -1,4 +1,3 @@
-import java.awt.Color;
 
 PImage render(PImage img, int widthOut, String state ){
 
