@@ -308,11 +308,13 @@ class ViewPort extends GuiElement {
       if( viewing ){
         viewing = false ;
         // set renderZone size
-        float time = 0.14;
-        if( lastRenderTime <time-0.03 ){ centerSize+=1 ;} else if (lastRenderTime >time+0.03) { centerSize-=2 ;};
-        if( lastRenderTime <time-0.04 ){ centerSize+=2 ;} else if (lastRenderTime >time+0.04) { centerSize-=2 ;};
-        if( lastRenderTime <time-0.06 ){ centerSize+=10 ;} else if (lastRenderTime >time+0.06) { centerSize-=10 ;};
-        if( lastRenderTime <time-0.10 ){ centerSize+=50 ;} else if (lastRenderTime >time+0.10) { centerSize-=50 ;};
+        float time = 0.12;
+        if( lastRenderTime <time-0.11 ){ centerSize+=35 ;} else if (lastRenderTime >time+0.11) { centerSize-=35 ;}
+        else if( lastRenderTime <time-0.09 ){ centerSize+=20 ;} else if (lastRenderTime >time+0.09) { centerSize-=20 ;}
+        else if( lastRenderTime <time-0.07 ){ centerSize+=10 ;} else if (lastRenderTime >time+0.07) { centerSize-=10 ;}
+        else if( lastRenderTime <time-0.05 ){ centerSize+=4 ;} else if (lastRenderTime >time+0.05) { centerSize-=5 ;}
+        else if( lastRenderTime <time-0.03 ){ centerSize+=2 ;} else if (lastRenderTime >time+0.03) { centerSize-=2 ;}
+        else if( lastRenderTime <time-0.02 ){ centerSize+=1 ;} else if (lastRenderTime >time+0.02) { centerSize-=1 ;}
         if( coords.size.x<coords.size.y ) centerSize = constrain( centerSize, 50, coords.size.x*zoom-10 );
         if( coords.size.x>coords.size.y ) centerSize = constrain( centerSize, 50, coords.size.y*zoom-10 );
         // set the renderZone position
@@ -321,14 +323,13 @@ class ViewPort extends GuiElement {
 
         renderMin = createImage( int(centerSize), int(centerSize), ALPHA );
         renderMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
-
+        // select a different thread each time (if available)
+        offThread = (offThread+1) % viewZoneThread.length ;
         viewZoneThread[offThread].interrupt();
         viewZoneThread[offThread] = new ViewZoneThread( int(centerSize/zoom) );
         viewZoneThread[offThread].start();
-        offThread = (offThread+1) % viewZoneThread.length ;
-        delay( int( (1000*time)/viewZoneThread.length)-10 );
+        delay( int( constrain( (1000*time)/viewZoneThread.length, 0, 1000*time ) ) );
       }
-      // image(renderMinDone,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) );
       image(renderMinDone,  int(coords.pos.x +( coords.size.x - renderMinDone.width )/2), int(coords.pos.y +( coords.size.y - renderMinDone.height )/2) ) ;
     }
     if (updateViewPort) updateView(src);
@@ -349,12 +350,11 @@ class ViewZoneThread extends Thread{
     PImage imgRnd;
     int size;
     public ViewZoneThread ( int size ){
-        this.imgRnd = renderMin ;
         this.size = size;
     }
     public void run(){
-            imgRnd = render(imgRnd, size, "");
-            if(imgRnd != null ) renderMinDone = imgRnd.get();
+            renderMinDone = render(renderMin, size, "");
+            // if(imgRnd != null ) renderMinDone = imgRnd;
             updateViewImg = true;
     }
 }

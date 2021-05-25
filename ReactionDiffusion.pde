@@ -84,8 +84,9 @@ PImage algoReactionDiffusion (PImage img, String state) {
         for (int i=0; i < H; ++i) { offsetH[i][0] = i-1; offsetH[i][1] = i+1; }
         offsetW[0][0] = 0; offsetW[W-1][1] = W-1;
         offsetH[0][0] = 0; offsetH[H-1][1] = H-1;
-
-        for (int n = 0; n< params.o[0] ; ++n){ // nombre d'iterations
+        int n = 0;
+        int nMax = params.o[0];
+        for ( n = 0; n< nMax ; ++n){ // nombre d'iterations
         for (int i = 0; i < W; ++i) {
             for (int j = 0; j < H; ++j) {
 
@@ -116,7 +117,7 @@ PImage algoReactionDiffusion (PImage img, String state) {
         if( Thread.currentThread().isInterrupted() ) break;
     }
 
-    if( Thread.currentThread().isInterrupted() ) lastRenderTime = 0.14 ;
+    if( Thread.currentThread().isInterrupted() ) lastRenderTime = ( nMax / n ) * ( millis()-time ) /1000 ;
     if( Thread.currentThread().isInterrupted() ) return null ;
 
     writeImg(img, U);

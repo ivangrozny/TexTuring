@@ -30,7 +30,8 @@ void setup() {
   frameRate(30);
   params = new Parameters();
   gui = new GuiWindow(); gui.setupGui();
-  fileSelected( new File(dataPath("Jaguar.jpg")) );
+  fileSelected( new File(dataPath("Jaguar.png")) );
+  gui.elements.get(0).scroll(4);
   params.loadFile( new File(dataPath("default.texturing")) );
 }
 
