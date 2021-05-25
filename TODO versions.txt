@@ -1,4 +1,5 @@
 
+- 3 - 4 Example of settings into TexTuring
 - visible text extention .TexTuring when setting export
 - unify select folder (exportImg & saveParam)
 - samples that keep img renderView
@@ -9,6 +10,7 @@
 - ctrl+key work with regular slider (time/threshold ...)
 - Increase bay Image-map definition
 - minor UI fixes
+- zoom +/- centré
 
 -------- V2.2 --------------- DONE
 

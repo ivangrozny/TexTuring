@@ -112,14 +112,18 @@ PImage algoReactionDiffusion (PImage img, String state) {
             updateViewImg = true;
             gui.message("Saving file ...");
         }
-        if(killRender){ n = params.o[0]-2; killRender = false; }
+        if( killRender ){ n = params.o[0]-2; killRender = false; }
+        if( Thread.currentThread().isInterrupted() ) break;
     }
+
+    if( Thread.currentThread().isInterrupted() ) lastRenderTime = 0.14 ;
+    if( Thread.currentThread().isInterrupted() ) return null ;
+
     writeImg(img, U);
-
     lastRenderTime = ( millis()-time ) /1000 ;
-
     return img;
 }
+
 void writeImg(PImage img, float[][] U){
     int pShift;
     for (int i = 0; i < img.width; i++) {

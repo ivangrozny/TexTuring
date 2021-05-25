@@ -23,7 +23,6 @@ class GuiElement {
     if (name=="iterations") ref = 0 ;
     if (name=="threshold") ref = 1 ;
     if (name=="resolution") ref = 2 ;
-
     if (name=="reaction") ref = 2 ;
     if (name=="diffusion") ref = 3 ;
   }
@@ -51,39 +50,38 @@ class GuiElement {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 class Menu extends GuiElement {
-
     String[] names;
     Rect zone;
-  Menu(Rect _coords, String[] _names) {
-    super(_coords, _names[0]);
-    names = new String[_names.length];
-    arrayCopy( _names, names );
-    for (int i = 1; i<names.length; i++){
-      Rect _rect = new Rect( coords );
-      _rect.pos.y += coords.size.y * i ;
-      gui.elements.add( new Button(_rect, names[i] ) );
-    }
-    zone = new Rect( coords );
-    zone.size.y = coords.size.y * names.length ;
-    update();
-  }
-  void update(){
-    fill( isOver() ? C[14] : C[18] );
-    drawRect(coords);
-    fill(0);
-    text(name, coords.pos.x + 5, coords.pos.y + 15);
-    for (int i = 1; i<names.length; i++){
-      for (GuiElement _elem : gui.elements) {
-        if ( _elem.name == names[i] ){
-          if ( isOver() ) _elem.isVisible = true ;
-          if ( !zone.isOver() ) _elem.isVisible = false ;
+    Menu(Rect _coords, String[] _names) {
+        super(_coords, _names[0]);
+        names = new String[_names.length];
+        arrayCopy( _names, names );
+        for (int i = 1; i<names.length; i++){
+            Rect _rect = new Rect( coords );
+            _rect.pos.y += coords.size.y * i ;
+            gui.elements.add( new Button(_rect, names[i] ) );
         }
-      }
+        zone = new Rect( coords );
+        zone.size.y = coords.size.y * names.length ;
+        update();
     }
-  }
-  void pressed() {
-    buttonPressed( this );
-  }
+    void update(){
+        fill( isOver() ? C[14] : C[18] );
+        drawRect(coords);
+        fill(0);
+        text(name, coords.pos.x + 5, coords.pos.y + 15);
+        for (int i = 1; i<names.length; i++){
+            for (GuiElement _elem : gui.elements) {
+                if ( _elem.name == names[i] ){
+                    if ( isOver() ) _elem.isVisible = true ;
+                    if ( !zone.isOver() ) _elem.isVisible = false ;
+                }
+            }
+        }
+    }
+    void pressed() {
+        buttonPressed( this );
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -158,7 +156,6 @@ class StatusBar extends GuiElement {
     }
   }
   void message(String msg){
-      //  TODO limiter la taille du text
     println("msg: "+msg);
     txt = msg ;
   }
@@ -191,8 +188,9 @@ class Slider extends GuiElement {
   }
   void dragged () {
       off = (control) ? 2 : 1 ;
-      pos += (mouseX - pmouseX)/off ;
+      pos += (mouseX - pos)/off ;
       params.o[ref] = (int)constrain( map(pos-coords.pos.x,0, coords.size.x,0,range), 0, range);
+      pos = mouseX;
       if( params.o[ref]==0 ) params.o[ref] = 1;
 
       update();
@@ -220,10 +218,12 @@ class Slider extends GuiElement {
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+PImage renderMin ;
+PImage renderMinDone ;
 class ViewPort extends GuiElement {
+    Thread[] viewZoneThread = new Thread[ constrain(Runtime.getRuntime().availableProcessors(),1,4) ] ; int offThread = 0;
   Rect renderZone ;
-  float centerRectX, centerRectY, centerSize ;
-  PImage renderMin ;
+  float centerRectX = 0, centerRectY = 0, centerSize ;
   boolean updateViewPort = false ;
   float[][] dataAnimation ;
   ViewPort (Rect _coords) {
@@ -231,6 +231,10 @@ class ViewPort extends GuiElement {
     viewZone   = new Rect(0,0,coords.size.x, coords.size.y); // from top left of input src-img
     renderZone = new Rect(coords.pos.x, coords.pos.y, 100, 100);
     viewImg = createImage(int(coords.size.x), int(coords.size.y), ALPHA);
+    renderMin = createImage(50,50,ALPHA);
+    renderMinDone = createImage(50,50,ALPHA);
+    viewZoneThread[1] = new ViewZoneThread( 10 ); viewZoneThread[0] = new ViewZoneThread( 10 );
+    viewZoneThread[2] = new ViewZoneThread( 10 ); viewZoneThread[3] = new ViewZoneThread( 10 );
   }
   void resize(){
     coords = new Rect( d+200+350+90 , b+35, width-200-350-90-d-d, height -3*b-35 );
@@ -265,7 +269,6 @@ class ViewPort extends GuiElement {
       viewZone.pos.x = constrain( viewZone.pos.x+x, 0, (src.width -viewZone.size.x > 0) ? src.width -viewZone.size.x : 0 ) ;
       viewZone.pos.y = constrain( viewZone.pos.y+y, 0, (src.height-viewZone.size.y > 0) ? src.height-viewZone.size.y : 0 ) ;
   }
-
   void renderView(){  // render all the viewPort
       if ( isRendering ) {
         killRender = true;
@@ -305,9 +308,11 @@ class ViewPort extends GuiElement {
       if( viewing ){
         viewing = false ;
         // set renderZone size
-        if( lastRenderTime <0.06 ){ centerSize+=2 ;} else if (lastRenderTime >0.09) { centerSize-=2 ;};
-        if( lastRenderTime <0.04 ){ centerSize+=10 ;} else if (lastRenderTime >0.11) { centerSize-=10 ;};
-        if( lastRenderTime <0.01 ){ centerSize+=50 ;} else if (lastRenderTime >0.30) { centerSize-=50 ;};
+        float time = 0.14;
+        if( lastRenderTime <time-0.03 ){ centerSize+=1 ;} else if (lastRenderTime >time+0.03) { centerSize-=2 ;};
+        if( lastRenderTime <time-0.04 ){ centerSize+=2 ;} else if (lastRenderTime >time+0.04) { centerSize-=2 ;};
+        if( lastRenderTime <time-0.06 ){ centerSize+=10 ;} else if (lastRenderTime >time+0.06) { centerSize-=10 ;};
+        if( lastRenderTime <time-0.10 ){ centerSize+=50 ;} else if (lastRenderTime >time+0.10) { centerSize-=50 ;};
         if( coords.size.x<coords.size.y ) centerSize = constrain( centerSize, 50, coords.size.x*zoom-10 );
         if( coords.size.x>coords.size.y ) centerSize = constrain( centerSize, 50, coords.size.y*zoom-10 );
         // set the renderZone position
@@ -317,12 +322,15 @@ class ViewPort extends GuiElement {
         renderMin = createImage( int(centerSize), int(centerSize), ALPHA );
         renderMin.set( int(-centerRectX*zoom), int(-centerRectY*zoom), viewImg );
 
-        renderMin = render(renderMin, int( centerSize/zoom ), "");
-        // renderMin.resize( int(renderMin.width/3), 0 ); // antialiazing
+        viewZoneThread[offThread].interrupt();
+        viewZoneThread[offThread] = new ViewZoneThread( int(centerSize/zoom) );
+        viewZoneThread[offThread].start();
+        offThread = (offThread+1) % viewZoneThread.length ;
+        delay( int( (1000*time)/viewZoneThread.length)-10 );
       }
-      image(renderMin,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) );
+      // image(renderMinDone,  int(coords.pos.x +centerRectX), int(coords.pos.y +centerRectY) );
+      image(renderMinDone,  int(coords.pos.x +( coords.size.x - renderMinDone.width )/2), int(coords.pos.y +( coords.size.y - renderMinDone.height )/2) ) ;
     }
-
     if (updateViewPort) updateView(src);
     if (updateViewPort) updateViewPort = false ;
   }
@@ -337,14 +345,28 @@ class ViewPort extends GuiElement {
     lastFrameAnimation = false;
   }
 }
-void renderViewThread(){
-  PImage img = gui.elements.get(0).viewImg.get() ;
+class ViewZoneThread extends Thread{
+    PImage imgRnd;
+    int size;
+    public ViewZoneThread ( int size ){
+        this.imgRnd = renderMin ;
+        this.size = size;
+    }
+    public void run(){
+            imgRnd = render(imgRnd, size, "");
+            if(imgRnd != null ) renderMinDone = imgRnd.get();
+            updateViewImg = true;
+    }
+}
 
-  img = render(img, (int)gui.elements.get(0).coords.size.x*3, "animate" );
+void renderViewThread(){
+    ViewPort vp = ((ViewPort)gui.elements.get(0));
+  PImage img = vp.viewImg.get() ;
+  img = render(img, (int)  vp.coords.size.x*3, "animate" );
   img.resize(img.width/3,img.height/3);
-  gui.elements.get(0).viewImg = img.get();
+  vp.viewImg = img.get();
   isRendering = false;
-  ((ViewPort)gui.elements.get(0)).updateViewPort = true; updateViewImg = true;
+  vp.updateViewPort = true; updateViewImg = true;
   gui.message("Last render in "+ int(lastRenderTime) + " sec");
 }
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

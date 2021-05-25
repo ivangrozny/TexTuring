@@ -20,6 +20,7 @@ class GuiWindow {
     background( bg );
     noStroke();
     PFont font = loadFont("PixelOperator-16.vlw"); textFont(font, 16);
+    initDrop();
 
     int guiWidth = 350;
     Rect guiRect = new Rect(d, d, 100, 22 );
@@ -72,7 +73,6 @@ class GuiWindow {
   void injectMouseWheel(int scroll){ for (GuiElement elem : elements) { if(elem.isOver()&&!isRendering ) { elem.scroll(scroll); return; } } }
 
   void update(){
-    initDrop();
     gui.elements.get(9).updateMapImg();
     viewing = true ;
     for (GuiElement elem : elements)
