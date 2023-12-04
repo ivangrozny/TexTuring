@@ -234,11 +234,7 @@ class ViewPort extends GuiElement {
     viewImg = createImage(int(coords.size.x), int(coords.size.y), ALPHA);
     renderMin = createImage(50,50,ALPHA);
     renderMinDone = createImage(50,50,ALPHA);
-    // for (Thread t : viewZoneThread) t = new ViewZoneThread( 10 );
-    // for (Thread t : viewZoneThread) t.start();
     for (int i=0;i<viewZoneThread.length;i++)  viewZoneThread[i] = new ViewZoneThread( 10 );
-    // viewZoneThread[1] = new ViewZoneThread( 10 ); viewZoneThread[0] = new ViewZoneThread( 10 );
-    // viewZoneThread[2] = new ViewZoneThread( 10 ); viewZoneThread[3] = new ViewZoneThread( 10 );
   }
   void resize(){
     coords = new Rect( d+200+350+90 , b+35, width-200-350-90-d-d, height -3*b-35 );
