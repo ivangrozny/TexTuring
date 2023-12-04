@@ -1,18 +1,27 @@
+int preventOsSleepPos = 1;
+void preventOsSleep() {
+    try{
+        Robot hal = new Robot();
+        Point pObj = MouseInfo.getPointerInfo().getLocation();
+        preventOsSleepPos = (preventOsSleepPos==1)? -1 : 1;
+        hal.mouseMove(pObj.x , pObj.y + preventOsSleepPos);
+        pObj = MouseInfo.getPointerInfo().getLocation();
+    }catch(Exception e) {println("preventOsSleep gone wrong");}
+}
 
-class Vector2
-{
-  float x, y;
-  Vector2(float _x, float _y) {
-    x=_x;
-    y=_y;
-  }
-  Vector2() {
-    x=0;
-    y=0;
-  }
-  Vector2(Vector2 other) {
-    this(other.x, other.y);
-  }
+class Vector2 {
+    float x, y;
+    Vector2(float _x, float _y) {
+        x=_x;
+        y=_y;
+    }
+    Vector2() {
+        x=0;
+        y=0;
+    }
+    Vector2(Vector2 other) {
+        this(other.x, other.y);
+    }
 }
 
 class Rect

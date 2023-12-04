@@ -4,7 +4,6 @@ import java.io.*;
 import java.util.*;
 import javax.swing.*;
 import org.apache.commons.io.FilenameUtils;
-
 import gifAnimation.*; GifMaker gifExport;
 import drop.*; SDrop drop; MyDropListener dropListener;
 

@@ -1,19 +1,36 @@
 
+V. 2.4 ?
+- .png export width limitation at 10000
+- check params .texturing extetion adder : if ( !getExtension(_filePath).equals("frac") )
+- Prevent Os sleep mode --> utils.pde
+- Starting noise only in brightest spots of the images
+- exported png with anti-aliasing
+- full zoom back image centered in the gui
 - 3 - 4 Example of settings into TexTuring
 - visible text extention .TexTuring when setting export
 - unify select folder (exportImg & saveParam)
 - samples that keep img renderView
 - black, white and grey indicator samples with current r-d
+- ctrl+key work with regular slider (time/threshold ...)
+- Possibility of process in RGB and CMYK color channels
+- detapper folder mode if new image source import
+- included preset parameters
+
+- check visual hover drag and drop
+- drag and drop folders
+- if stop export : no file saving.
+- interface scale according to screen dpi
+
 
 
 -------- V2.3 --------------- DONE
-- ctrl+key work with regular slider (time/threshold ...)
 - Increase bay Image-map definition
 - minor UI fixes
-- zoom +/- centré
+- zoom +/- centered
+- preview zone multithreaded if available (max 4)
+
 
 -------- V2.2 --------------- DONE
-
 - Vectorization fixed : SVG & PDF export
 - Stop button during process
 - Loading bar
@@ -26,8 +43,8 @@
 - Window maximalised  at opening
 - Graphic user interface cleaned
 
--------- V2.1 --------------- DONE
 
+-------- V2.1 --------------- DONE
 - "Drag and drop" image,  folder and parameters file
 - Render preview with antialiazing
 - User interface speed optimisation

@@ -53,7 +53,6 @@ PImage algoReactionDiffusion (PImage img, String state) {
     }
 
     float[][][] fkuv = new float[W][H][4];  // init param grid
-
     float[] b = new float[5];
     float[] w = new float[5];
     for (int k = 0; k<4; ++k) b[k] = map(params.b[k], 0, 200, MINI[k], MAXI[k]);
@@ -69,35 +68,33 @@ PImage algoReactionDiffusion (PImage img, String state) {
                 fkuv[i][j][1] = ( map( j, 0, W, MAXI[1], MINI[0] )  );
                 fkuv[i][j][2] = midU;
                 fkuv[i][j][3] = midV;
-
-                } else {
-                    for (int k = 0; k<4; ++k){
-                        fkuv[i][j][k] = (  map( brightness(img.pixels[j*W+i]),0,255, b[k], w[k]) );
-                    }
+            } else {
+                for (int k = 0; k<4; ++k){
+                    fkuv[i][j][k] = (  map( brightness(img.pixels[j*W+i]),0,255, b[k], w[k]) );
                 }
-
             }
         }
+    }
 
-        //Set up offsets
-        for (int i=0; i < W; ++i) { offsetW[i][0] = i-1; offsetW[i][1] = i+1; }
-        for (int i=0; i < H; ++i) { offsetH[i][0] = i-1; offsetH[i][1] = i+1; }
-        offsetW[0][0] = 0; offsetW[W-1][1] = W-1;
-        offsetH[0][0] = 0; offsetH[H-1][1] = H-1;
-        int n = 0;
-        int nMax = params.o[0];
-        for ( n = 0; n< nMax ; ++n){ // nombre d'iterations
+    int n = 0;
+    int nMax = params.o[0];
+    for ( n = 0; n< nMax ; ++n){ // nombre d'iterations
         for (int i = 0; i < W; ++i) {
             for (int j = 0; j < H; ++j) {
+                u = U[i][j];
+                v = V[i][j];
+                uvv = u*v*v;
+                lapU = U[constrain(i+1,0,W-1)][j] + U[constrain(i-1,0,W-1)][j] + U[i][constrain(j+1,0,H-1)] + U[i][constrain(j-1,0,H)] -4*u;
+                lapV = V[constrain(i+1,0,W-1)][j] + V[constrain(i-1,0,W-1)][j] + V[i][constrain(j+1,0,H-1)] + V[i][constrain(j-1,0,H)] -4*v;
 
-                lapU = U[offsetW[i][0]][j] + U[offsetW[i][1]][j] + U[i][offsetH[j][0]] + U[i][offsetH[j][1]] -4*U[i][j];
-                lapV = V[offsetW[i][0]][j] + V[offsetW[i][1]][j] + V[i][offsetH[j][0]] + V[i][offsetH[j][1]] -4*V[i][j];
+                U[i][j] = u+ ( fkuv[i][j][2]*lapU - uvv + fkuv[i][j][0] * (1-u) ) * 1.38 ;
+                V[i][j] = v+ ( fkuv[i][j][3]*lapV + uvv - (fkuv[i][j][1]+fkuv[i][j][0])*v ) * 0.63 ;
 
-                uvv = U[i][j]*V[i][j]*V[i][j];
-                U[i][j] += ( fkuv[i][j][2]*lapU - uvv + fkuv[i][j][0]*(1 - U[i][j]) ) * 1.38 ;
-                V[i][j] += ( fkuv[i][j][3]*lapV + uvv - (fkuv[i][j][1]+fkuv[i][j][0])*V[i][j] ) * 0.63 ;
+                if (u>1) U[i][j] = 1; if (u<0) U[i][j] = 0;
+                if (v>1) V[i][j] = 1; if (v<0) V[i][j] = 0;
             }
         }
+
         if( (state.equals("export") || state.equals("animate")) && n%int((params.o[0])/100+1) == 0 )  {
             renderProgress = int( (100*n)/(params.o[0]+1) );
             gui.message("Rendering : "+renderProgress+" %  " );
@@ -106,6 +103,9 @@ PImage algoReactionDiffusion (PImage img, String state) {
         if( (state.equals("export") || state.equals("animate")) && n%30 == 3 ){
             ((ViewPort)gui.elements.get(0)).dataAnimation = U ;
             updateViewImg = true;
+        }
+        if( (state.equals("export") || state.equals("animate")) && n%200 == 3 ){
+            preventOsSleep();
         }
         if( (state.equals("export") ) && n == params.o[0]-1 ){
             ((ViewPort)gui.elements.get(0)).dataAnimation = U ;
@@ -129,7 +129,7 @@ void writeImg(PImage img, float[][] U){
     int pShift;
     for (int i = 0; i < img.width; i++) {
         for (int j = 0; j < img.height; j++) {
-            pShift = int( U[i][j]*255) ;
+            pShift = int( constrain( (U[i][j])*255 ,0,255) ) ;
             img.pixels[j*img.width+i] = 0xff000000 | (pShift << 16) | (pShift << 8) | pShift  ;
         }
     }
